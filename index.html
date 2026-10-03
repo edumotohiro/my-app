@@ -1,0 +1,759 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>勤行ストリーク・モンスターズ</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@600;800;900&family=Zen+Maru+Gothic:wght@700;900&display=swap');
+
+        body {
+            font-family: 'Zen Maru Gothic', sans-serif;
+            background-color: #0d1117;
+            color: #f0f6fc;
+            touch-action: manipulation;
+            user-select: none;
+        }
+
+        .font-cyber {
+            font-family: 'Orbitron', sans-serif;
+        }
+
+        /* カスタムネオンシャドウ・グロー */
+        .neon-border-blue {
+            box-shadow: 0 0 10px #00d2ff, inset 0 0 10px #00d2ff;
+        }
+        .neon-border-gold {
+            box-shadow: 0 0 15px #ffd700, inset 0 0 5px #ffd700;
+        }
+        .neon-text-gold {
+            text-shadow: 0 0 8px rgba(255, 215, 0, 0.8);
+        }
+        .neon-text-fire {
+            text-shadow: 0 0 8px rgba(255, 69, 0, 0.8);
+        }
+
+        /* スタンプアニメーション */
+        @keyframes stamp-pop {
+            0% { transform: scale(3) rotate(-20deg); opacity: 0; }
+            50% { transform: scale(0.9) rotate(5deg); opacity: 1; }
+            75% { transform: scale(1.1) rotate(-3deg); }
+            100% { transform: scale(1) rotate(0deg); }
+        }
+        .stamp-animated {
+            animation: stamp-pop 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+        }
+
+        /* モーダル背景 */
+        .modal-bg {
+            background: rgba(10, 14, 23, 0.92);
+            backdrop-filter: blur(8px);
+        }
+
+        /* カードのレア度別背景 */
+        .card-r1 { background: linear-gradient(135deg, #2a324b, #1d233a); border: 2px solid #64748b; }
+        .card-r2 { background: linear-gradient(135deg, #1e3a8a, #0f172a); border: 2px solid #3b82f6; box-shadow: 0 0 8px rgba(59,130,246,0.5); }
+        .card-r3 { background: linear-gradient(135deg, #065f46, #022c22); border: 2px solid #10b981; box-shadow: 0 0 10px rgba(16,185,129,0.5); }
+        .card-r4 { background: linear-gradient(135deg, #581c87, #2e1065); border: 2px solid #a855f7; box-shadow: 0 0 12px rgba(168,85,247,0.6); }
+        .card-r5 { background: linear-gradient(135deg, #78350f, #451a03); border: 2px solid #f59e0b; box-shadow: 0 0 18px rgba(245,158,11,0.8); }
+
+        /* スクロールバー非表示 */
+        .no-scrollbar::-webkit-scrollbar { display: none; }
+        .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+    </style>
+</head>
+<body class="min-h-screen flex flex-col justify-between max-w-md mx-auto relative overflow-x-hidden border-x border-slate-800">
+
+    <!-- ヘッダー＆ステータスバー -->
+    <header class="p-4 bg-slate-900/90 backdrop-blur sticky top-0 z-30 border-b border-cyan-500/30">
+        <div class="flex justify-between items-center mb-2">
+            <h1 class="text-xl font-black italic tracking-wider text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 via-blue-500 to-amber-400">
+                <i class="fa-solid fa-bolt text-amber-400 mr-1"></i>勤行ストリーク
+            </h1>
+            <!-- 称号バッジ -->
+            <div id="rank-badge" class="px-3 py-1 rounded-full text-xs font-bold bg-gradient-to-r from-cyan-600 to-blue-700 text-white border border-cyan-300 shadow-sm flex items-center gap-1">
+                <i class="fa-solid fa-shield-halved"></i>
+                <span id="rank-name">勤行ビギナー</span>
+            </div>
+        </div>
+
+        <!-- 連続ストリークカウンター -->
+        <div class="bg-slate-950 p-3 rounded-xl border border-slate-800 flex justify-between items-center shadow-inner">
+            <div class="flex items-center gap-2">
+                <div class="w-10 h-10 rounded-lg bg-orange-500/20 border border-orange-500/50 flex items-center justify-center text-orange-500 text-xl">
+                    <i class="fa-solid fa-fire-flame-curved animate-pulse"></i>
+                </div>
+                <div>
+                    <div class="text-[10px] text-slate-400 font-bold uppercase tracking-wider">RENSOKU STREAK</div>
+                    <div class="text-lg font-extrabold text-amber-400 leading-none">
+                        <span id="streak-count" class="text-2xl font-cyber text-amber-300">0</span> 日れんぞく！
+                    </div>
+                </div>
+            </div>
+            <div class="text-right">
+                <div class="text-[10px] text-slate-400 font-bold">集めたカード</div>
+                <div class="text-sm font-bold text-cyan-400">
+                    <span id="collected-count">0</span> / <span id="total-cards-count">20</span> 種
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- メインコンテンツ：カレンダー -->
+    <main id="view-calendar" class="p-4 flex-1 flex flex-col justify-start gap-4">
+        
+        <!-- 月切替・ヘッダー -->
+        <div class="flex justify-between items-center bg-slate-900/60 p-3 rounded-xl border border-slate-800">
+            <button id="prev-month" class="w-9 h-9 rounded-lg bg-slate-800 hover:bg-slate-700 text-cyan-400 font-bold flex items-center justify-center transition">
+                <i class="fa-solid fa-chevron-left"></i>
+            </button>
+            <h2 id="calendar-month-title" class="text-lg font-extrabold text-cyan-300 font-cyber tracking-widest">
+                2026.10
+            </h2>
+            <button id="next-month" class="w-9 h-9 rounded-lg bg-slate-800 hover:bg-slate-700 text-cyan-400 font-bold flex items-center justify-center transition">
+                <i class="fa-solid fa-chevron-right"></i>
+            </button>
+        </div>
+
+        <!-- 今日のミッション表示 -->
+        <div class="bg-gradient-to-r from-blue-900/40 via-cyan-900/20 to-slate-900/40 p-3 rounded-xl border border-cyan-500/40 flex items-center justify-between">
+            <div class="flex items-center gap-3">
+                <div class="text-2xl text-amber-400">
+                    <i class="fa-solid fa-scroll"></i>
+                </div>
+                <div>
+                    <div class="text-xs text-cyan-300 font-bold">きょうのミッション</div>
+                    <div class="text-sm font-extrabold text-white">勤行（ごんぎょう）をしよう！</div>
+                </div>
+            </div>
+            <span id="today-status-badge" class="text-xs px-2.5 py-1 rounded-md font-bold bg-slate-800 text-slate-400">
+                未たっせい
+            </span>
+        </div>
+
+        <!-- カレンダーグリッド -->
+        <div class="bg-slate-900/80 p-3 rounded-2xl border border-slate-800 shadow-xl">
+            <!-- 曜日ヘッダー -->
+            <div class="grid grid-cols-7 gap-1 text-center font-bold text-xs text-slate-400 mb-2">
+                <div class="text-rose-400">日</div>
+                <div>月</div>
+                <div>火</div>
+                <div>水</div>
+                <div>木</div>
+                <div>金</div>
+                <div class="text-sky-400">土</div>
+            </div>
+            <!-- 日付セル群 -->
+            <div id="calendar-days" class="grid grid-cols-7 gap-1.5 text-center">
+                <!-- JSで動的生成 -->
+            </div>
+        </div>
+
+        <!-- スタンプ選択子 (かっこいいスタンプデザイン) -->
+        <div class="bg-slate-900/60 p-3 rounded-xl border border-slate-800">
+            <div class="text-xs font-bold text-slate-400 mb-2 flex items-center gap-1">
+                <i class="fa-solid fa-palette text-cyan-400"></i> スタンプデザインをえらぶ
+            </div>
+            <div class="flex justify-around gap-2">
+                <button class="stamp-select-btn active w-11 h-11 rounded-xl bg-slate-800 border-2 border-amber-400 text-amber-400 text-xl flex items-center justify-center" data-stamp="fire">
+                    <i class="fa-solid fa-fire"></i>
+                </button>
+                <button class="stamp-select-btn w-11 h-11 rounded-xl bg-slate-800 border-2 border-transparent text-cyan-400 text-xl flex items-center justify-center" data-stamp="bolt">
+                    <i class="fa-solid fa-bolt"></i>
+                </button>
+                <button class="stamp-select-btn w-11 h-11 rounded-xl bg-slate-800 border-2 border-transparent text-emerald-400 text-xl flex items-center justify-center" data-stamp="dragon">
+                    <i class="fa-solid fa-dragon"></i>
+                </button>
+                <button class="stamp-select-btn w-11 h-11 rounded-xl bg-slate-800 border-2 border-transparent text-yellow-300 text-xl flex items-center justify-center" data-stamp="crown">
+                    <i class="fa-solid fa-crown"></i>
+                </button>
+            </div>
+        </div>
+    </main>
+
+    <!-- サブコンテンツ：図鑑 (コレクション) 画面 (初期状態は非表示) -->
+    <main id="view-collection" class="p-4 flex-1 flex-col gap-4 hidden">
+        <div class="flex justify-between items-center">
+            <h2 class="text-lg font-black text-amber-300 flex items-center gap-2">
+                <i class="fa-solid fa-box-archive text-amber-400"></i> モンスター＆そうび図鑑
+            </h2>
+            <div class="text-xs text-slate-400 font-bold">
+                コンプリート率: <span id="completion-rate" class="text-cyan-400 font-cyber">0%</span>
+            </div>
+        </div>
+
+        <!-- フィルタ・タブ -->
+        <div class="flex gap-2">
+            <button id="filter-all" class="flex-1 py-1.5 bg-cyan-600 text-white rounded-lg text-xs font-bold shadow">すべて</button>
+            <button id="filter-monster" class="flex-1 py-1.5 bg-slate-800 text-slate-300 rounded-lg text-xs font-bold">モンスター</button>
+            <button id="filter-weapon" class="flex-1 py-1.5 bg-slate-800 text-slate-300 rounded-lg text-xs font-bold">そうび</button>
+        </div>
+
+        <!-- コレクションカードグリッド -->
+        <div id="collection-grid" class="grid grid-cols-2 gap-3 pb-6">
+            <!-- JSで動的生成 -->
+        </div>
+    </main>
+
+    <!-- ナビゲーションバー -->
+    <nav class="sticky bottom-0 bg-slate-950/95 backdrop-blur border-t border-slate-800 p-2 flex justify-around z-30">
+        <button id="nav-calendar" class="flex-1 py-2 flex flex-col items-center gap-1 text-cyan-400 font-bold text-xs">
+            <i class="fa-solid fa-calendar-days text-lg"></i>
+            <span>カレンダー</span>
+        </button>
+        <button id="nav-collection" class="flex-1 py-2 flex flex-col items-center gap-1 text-slate-500 font-bold text-xs hover:text-slate-300 transition">
+            <i class="fa-solid fa-dragon text-lg"></i>
+            <span>ずかん</span>
+        </button>
+    </nav>
+
+    <!-- ポン押し時のご褒美モーダル (ガチャ演出 & 格言) -->
+    <div id="reward-modal" class="fixed inset-0 modal-bg z-50 flex items-center justify-center p-4 hidden">
+        <div class="bg-slate-900 border-2 border-amber-400/80 rounded-2xl w-full max-w-sm p-5 text-center relative shadow-2xl overflow-hidden transform transition-all scale-95 opacity-0" id="reward-card-inner">
+            
+            <!-- 背景光エフェクト -->
+            <div class="absolute -top-24 -left-24 w-48 h-48 bg-amber-500/20 rounded-full blur-2xl pointer-events-none"></div>
+            <div class="absolute -bottom-24 -right-24 w-48 h-48 bg-cyan-500/20 rounded-full blur-2xl pointer-events-none"></div>
+
+            <div class="text-xs font-bold text-amber-400 tracking-widest uppercase mb-1">
+                <i class="fa-solid fa-sparkles mr-1"></i> MISSION COMPLETE!
+            </div>
+            
+            <h3 class="text-xl font-black text-white mb-2">勤行（ごんぎょう）達成！</h3>
+
+            <!-- 今日のお言葉・格言 -->
+            <div class="bg-slate-950/90 border border-slate-800 p-3 rounded-xl mb-4 text-left">
+                <div class="text-[10px] text-cyan-400 font-bold mb-1 flex items-center gap-1">
+                    <i class="fa-solid fa-quote-left"></i> 今日のめいげん
+                </div>
+                <div id="modal-quote-text" class="text-sm font-bold text-slate-200 leading-snug">
+                    継続は力なり。毎日の一歩が大きな強さになる！
+                </div>
+                <div id="modal-quote-ruby" class="text-[10px] text-slate-400 mt-1">
+                    （けいぞくは ちからなり）
+                </div>
+            </div>
+
+            <!-- ドロップしたカード表示 -->
+            <div class="mb-4">
+                <div class="text-xs font-bold text-slate-400 mb-2">ゲットしたコレクション！</div>
+                <div id="reward-card-container" class="card-r3 p-4 rounded-xl border-2 flex flex-col items-center justify-center relative overflow-hidden transform hover:scale-105 transition">
+                    <span id="reward-card-rarity" class="absolute top-2 right-2 text-xs font-cyber font-black px-2 py-0.5 rounded bg-slate-950/80 text-amber-300 border border-amber-400/50">
+                        ★3 RARE
+                    </span>
+                    <div id="reward-card-icon" class="text-5xl my-3 text-cyan-300 drop-shadow-md">
+                        <i class="fa-solid fa-dragon"></i>
+                    </div>
+                    <div id="reward-card-name" class="text-base font-extrabold text-white mb-1">
+                        サンダービースト
+                    </div>
+                    <div id="reward-card-desc" class="text-[11px] text-slate-300">
+                        いなずまを まとう でんせつの けもの。
+                    </div>
+                </div>
+            </div>
+
+            <!-- 閉じるボタン -->
+            <button id="close-modal-btn" class="w-full py-3 bg-gradient-to-r from-amber-500 to-orange-600 hover:from-amber-400 hover:to-orange-500 text-slate-950 font-black text-base rounded-xl shadow-lg transition transform active:scale-95">
+                 OK（閉じる）
+            </button>
+        </div>
+    </div>
+
+    <script>
+        /* ===================================================
+           データ定義：モンスター＆装備カードリスト (20種類)
+           =================================================== */
+        const CARDS_DATABASE = [
+            // ★1 Normal
+            { id: 'c1', name: 'スライムドラコ', type: 'monster', rarity: 1, icon: 'fa-disease', desc: 'まいちに しゅぎょうする ちいさな ドラゴン。' },
+            { id: 'c2', name: 'み習いナイト', type: 'monster', rarity: 1, icon: 'fa-user-shield', desc: 'ぼうけんを はじめたばかりの きし。' },
+            { id: 'c3', name: '木のたて', type: 'weapon', rarity: 1, icon: 'fa-shield', desc: 'じょうぶな 木で できた たて。' },
+            { id: 'c4', name: '銅のけん', type: 'weapon', rarity: 1, icon: 'fa-gavel', desc: 'かるくて つかいやすい 基本の けん。' },
+            
+            // ★2 Rare
+            { id: 'c5', name: 'ウインドウルフ', type: 'monster', rarity: 2, icon: 'fa-dog', desc: 'かぜのように はやく はしる おおかみ。' },
+            { id: 'c6', name: 'ファイヤバード', type: 'monster', rarity: 2, icon: 'fa-crow', desc: 'あかい たてがみを もつ ほのおの とり。' },
+            { id: 'c7', name: '鉄のよろい', type: 'weapon', rarity: 2, icon: 'fa-vest', desc: 'しっかり 身を まもる てつの よろい。' },
+            { id: 'c8', name: 'バトルアックス', type: 'weapon', rarity: 2, icon: 'fa-hammer', desc: 'パワーあふれる 大きな おの。' },
+
+            // ★3 Super Rare
+            { id: 'c9', name: 'サンダービースト', type: 'monster', rarity: 3, icon: 'fa-cat', desc: 'いなずまを まとう でんせつの けもの。' },
+            { id: 'c10', name: 'アクアタイタン', type: 'monster', rarity: 3, icon: 'fa-hippo', desc: 'うみの つよい パワーを ひめた きょじん。' },
+            { id: 'c11', name: '魔法のつえ', type: 'weapon', rarity: 3, icon: 'fa-wand-magic-sparkles', desc: 'ふしぎな 光を はなつ まほうの つえ。' },
+            { id: 'c12', name: 'シルバーブレード', type: 'weapon', rarity: 3, icon: 'fa-hand-back-fist', desc: 'ぎんいろに かがやく す鋭い けん。' },
+
+            // ★4 Ultra Rare
+            { id: 'c13', name: 'サイバーフェニックス', type: 'monster', rarity: 4, icon: 'fa-phoenix-squadron', desc: 'なんどでも よみがえる 未来の でんせつどり。' },
+            { id: 'c14', name: 'ダークナイト・レオン', type: 'monster', rarity: 4, icon: 'fa-mask', desc: 'やみを つらぬく くろき きし。' },
+            { id: 'c15', name: '龍神のたて', type: 'weapon', rarity: 4, icon: 'fa-shield-halved', desc: 'りゅうの うろこで つくられた 最強の たて。' },
+            { id: 'c16', name: 'プラズマキャノン', type: 'weapon', rarity: 4, icon: 'fa-gun', desc: '強力な エナジーを はなつ ぶき。' },
+
+            // ★5 Secret Ultra Rare (UR)
+            { id: 'c17', name: 'バハムートドラゴン', type: 'monster', rarity: 5, icon: 'fa-dragon', desc: 'てんくうを おさめる 最強の りゅうの おう。' },
+            { id: 'c18', name: 'パラディン・アーサー', type: 'monster', rarity: 5, icon: 'fa-chess-knight', desc: '光の ちからで せかいを すくう 聖なる きし。' },
+            { id: 'c19', name: '聖剣エクスカリバー', type: 'weapon', rarity: 5, icon: 'fa-burst', desc: '選ばれし 勇者だけが もてる でんせつの けん。' },
+            { id: 'c20', name: '王者のカンムリ', type: 'weapon', rarity: 5, icon: 'fa-crown', desc: '継続を たっせいした 王者に あたえられる かんむり。' }
+        ];
+
+        /* ===================================================
+           格言・めいげんリスト (小学2年生向けふりがな意識)
+           =================================================== */
+        const QUOTES_DATABASE = [
+            { text: "継続は力なり。毎日の一歩が、大きな強さになる！", ruby: "（けいぞくは ちからなり。まいにちの いっぽが おおきな つよさになる！）" },
+            { text: "一歩一歩が 未来をつくる。きょうの努力は ウソをつかない！", ruby: "（いっぽいっぽが みらいをつくる。きょうの どりょくは ウソをつかない！）" },
+            { text: "塵も積もれば 山となる。小さなパワーも あつまれば 大勝利！", ruby: "（ちりも つもれば やまとなる。ちいさな パワーも あつまれば だいしょうり！）" },
+            { text: "自分に勝つ者が、ほんとうの ヒーローだ！", ruby: "（じぶんに かつものが、ほんとうの ヒーローだ！）" },
+            { text: "毎日つづける君は、すでにかっこいい 勇者だ！", ruby: "（まいにち つづけるきみは、すでにかっこいい ゆうしゃだ！）" },
+            { text: "今日の真剣な一歩が、明日の自分を つ強くする！", ruby: "（きょうの しんけんな いっぽが、あしたの じぶんを つよくする！）" }
+        ];
+
+        /* ===================================================
+           称号（ランク）テーブル
+           =================================================== */
+        const RANKS = [
+            { threshold: 0, name: '勤行ビギナー', icon: 'fa-shield-cat' },
+            { threshold: 3, name: '勤行ハンター', icon: 'fa-shield-halved' },
+            { threshold: 7, name: '勤行ナイト', icon: 'fa-khanda' },
+            { threshold: 14, name: '勤行マスター', icon: 'fa-trophy' },
+            { threshold: 30, name: '勤行レジェンド', icon: 'fa-crown' }
+        ];
+
+        /* ===================================================
+           アプリケーション状態管理 (LocalStorageと連携)
+           =================================================== */
+        let state = {
+            stamps: {}, // { '2026-10-03': 'fire', ... }
+            inventory: [], // ['c1', 'c3', ...] 獲得カードIDリスト
+            selectedStamp: 'fire',
+            currentViewYear: new Date().getFullYear(),
+            currentViewMonth: new Date().getMonth()
+        };
+
+        // 初期化処理
+        function initState() {
+            const saved = localStorage.getItem('gongyo_app_state');
+            if (saved) {
+                try {
+                    state = { ...state, ...JSON.parse(saved) };
+                } catch (e) {
+                    console.error("Failed to load state", e);
+                }
+            }
+            // 今日が現在の表示年月とずれていれば合わせる
+            const today = new Date();
+            state.currentViewYear = today.getFullYear();
+            state.currentViewMonth = today.getMonth();
+
+            updateHeaderStats();
+            renderCalendar();
+            renderCollection();
+        }
+
+        function saveState() {
+            localStorage.setItem('gongyo_app_state', JSON.stringify(state));
+            updateHeaderStats();
+        }
+
+        /* ===================================================
+           日付フォーマット・計算ユーティリティ
+           =================================================== */
+        function formatDateKey(year, month, day) {
+            const m = String(month + 1).padStart(2, '0');
+            const d = String(day).padStart(2, '0');
+            return `${year}-${m}-${d}`;
+        }
+
+        function getTodayKey() {
+            const now = new Date();
+            return formatDateKey(now.getFullYear(), now.getMonth(), now.getDate());
+        }
+
+        // 連続達成日数（ストリーク）の計算
+        function calculateStreak() {
+            let streak = 0;
+            let checkDate = new Date();
+            
+            // 今日スタンプを押していなければ、昨日からの連続を確認
+            let todayKey = formatDateKey(checkDate.getFullYear(), checkDate.getMonth(), checkDate.getDate());
+            if (!state.stamps[todayKey]) {
+                checkDate.setDate(checkDate.getDate() - 1);
+            }
+
+            while (true) {
+                let key = formatDateKey(checkDate.getFullYear(), checkDate.getMonth(), checkDate.getDate());
+                if (state.stamps[key]) {
+                    streak++;
+                    checkDate.setDate(checkDate.getDate() - 1);
+                } else {
+                    break;
+                }
+            }
+            return streak;
+        }
+
+        /* ===================================================
+           UI更新処理
+           =================================================== */
+        function updateHeaderStats() {
+            const streak = calculateStreak();
+            document.getElementById('streak-count').textContent = streak;
+
+            // 称号更新
+            let currentRank = RANKS[0];
+            for (let r of RANKS) {
+                if (streak >= r.threshold) currentRank = r;
+            }
+            document.getElementById('rank-name').textContent = currentRank.name;
+
+            // 今日のステータスバッジ
+            const todayKey = getTodayKey();
+            const badge = document.getElementById('today-status-badge');
+            if (state.stamps[todayKey]) {
+                badge.textContent = "たっせい済！";
+                badge.className = "text-xs px-2.5 py-1 rounded-md font-bold bg-amber-500/20 text-amber-400 border border-amber-500/40";
+            } else {
+                badge.textContent = "未たっせい";
+                badge.className = "text-xs px-2.5 py-1 rounded-md font-bold bg-slate-800 text-slate-400";
+            }
+
+            // コレクション数更新
+            const uniqueCards = new Set(state.inventory).size;
+            document.getElementById('collected-count').textContent = uniqueCards;
+            document.getElementById('total-cards-count').textContent = CARDS_DATABASE.length;
+
+            const rate = Math.round((uniqueCards / CARDS_DATABASE.length) * 100);
+            document.getElementById('completion-rate').textContent = `${rate}%`;
+        }
+
+        /* ===================================================
+           カレンダー描画ロジック
+           =================================================== */
+        function renderCalendar() {
+            const year = state.currentViewYear;
+            const month = state.currentViewMonth;
+
+            document.getElementById('calendar-month-title').textContent = `${year}.${String(month + 1).padStart(2, '0')}`;
+
+            const firstDay = new Date(year, month, 1).getDay();
+            const daysInMonth = new Date(year, month + 1, 0).getDate();
+            const todayKey = getTodayKey();
+
+            const calendarGrid = document.getElementById('calendar-days');
+            calendarGrid.innerHTML = '';
+
+            // 空白セル
+            for (let i = 0; i < firstDay; i++) {
+                const emptyCell = document.createElement('div');
+                emptyCell.className = "h-12 rounded-lg bg-slate-950/30";
+                calendarGrid.appendChild(emptyCell);
+            }
+
+            // 日付セル
+            for (let day = 1; day <= daysInMonth; day++) {
+                const dateKey = formatDateKey(year, month, day);
+                const isToday = (dateKey === todayKey);
+                const stampType = state.stamps[dateKey];
+
+                const dayCell = document.createElement('button');
+                dayCell.className = `h-12 rounded-xl border flex flex-col items-center justify-between p-1 transition relative overflow-hidden ${
+                    isToday ? 'border-cyan-400 bg-cyan-950/40 shadow-md ring-2 ring-cyan-500/30' : 'border-slate-800 bg-slate-950/80 hover:bg-slate-800'
+                }`;
+
+                // 日付数字
+                const dayNum = document.createElement('span');
+                dayNum.className = `text-[11px] font-cyber font-bold ${
+                    isToday ? 'text-cyan-300 font-extrabold' : 'text-slate-400'
+                }`;
+                dayNum.textContent = day;
+                dayCell.appendChild(dayNum);
+
+                // スタンプ表示または押し領域
+                const stampArea = document.createElement('div');
+                stampArea.className = "w-full flex-1 flex items-center justify-center text-lg";
+
+                if (stampType) {
+                    stampArea.innerHTML = getStampIconHTML(stampType);
+                    stampArea.firstElementChild.classList.add('stamp-animated');
+                } else if (isToday) {
+                    stampArea.innerHTML = `<span class="text-[9px] text-cyan-400/70 animate-pulse font-bold">ポン！</span>`;
+                }
+
+                dayCell.appendChild(stampArea);
+
+                // 今日の日付タップでスタンプを押す
+                dayCell.addEventListener('click', () => {
+                    handleDayClick(dateKey, isToday);
+                });
+
+                calendarGrid.appendChild(dayCell);
+            }
+        }
+
+        // スタンプアイコンのHTML表現
+        function getStampIconHTML(type) {
+            switch (type) {
+                case 'fire':
+                    return `<i class="fa-solid fa-fire text-amber-400 drop-shadow-[0_0_8px_rgba(251,191,36,0.8)]"></i>`;
+                case 'bolt':
+                    return `<i class="fa-solid fa-bolt text-cyan-400 drop-shadow-[0_0_8px_rgba(34,211,238,0.8)]"></i>`;
+                case 'dragon':
+                    return `<i class="fa-solid fa-dragon text-emerald-400 drop-shadow-[0_0_8px_rgba(52,211,153,0.8)]"></i>`;
+                case 'crown':
+                    return `<i class="fa-solid fa-crown text-yellow-300 drop-shadow-[0_0_8px_rgba(253,224,71,0.8)]"></i>`;
+                default:
+                    return `<i class="fa-solid fa-circle-check text-cyan-400"></i>`;
+            }
+        }
+
+        /* ===================================================
+           スタンプ押下アクション & ガチャ処理
+           =================================================== */
+        function handleDayClick(dateKey, isToday) {
+            // すでに押されている場合もモーダル等で確認可能（今回は再スタンプも許可して楽しめる仕様）
+            const isFirstTimeToday = !state.stamps[dateKey];
+
+            // スタンプ記録
+            state.stamps[dateKey] = state.selectedStamp;
+
+            // ガチャカード決定
+            const droppedCard = rollGacha();
+            state.inventory.push(droppedCard.id);
+
+            // 保存
+            saveState();
+
+            // 紙吹雪＆光エフェクト
+            confetti({
+                particleCount: 80,
+                spread: 70,
+                origin: { y: 0.6 },
+                colors: ['#00d2ff', '#ffd700', '#ff4500', '#10b981']
+            });
+
+            // モーダル表示
+            showRewardModal(droppedCard);
+
+            // 再描画
+            renderCalendar();
+            renderCollection();
+        }
+
+        // ガチャ（確率調整）
+        function rollGacha() {
+            const rand = Math.random() * 100;
+            let targetRarity = 1;
+
+            if (rand < 5) targetRarity = 5;      // 5% (UR)
+            else if (rand < 20) targetRarity = 4; // 15% (SR)
+            else if (rand < 45) targetRarity = 3; // 25% (R)
+            else if (rand < 75) targetRarity = 2; // 30% (N+)
+            else targetRarity = 1;               // 25% (N)
+
+            const filtered = CARDS_DATABASE.filter(c => c.rarity === targetRarity);
+            return filtered[Math.floor(Math.random() * filtered.length)];
+        }
+
+        /* ===================================================
+           ご褒美モーダル
+           =================================================== */
+        function showRewardModal(card) {
+            const modal = document.getElementById('reward-modal');
+            const inner = document.getElementById('reward-card-inner');
+
+            // ランダム格言のセット
+            const randomQuote = QUOTES_DATABASE[Math.floor(Math.random() * QUOTES_DATABASE.length)];
+            document.getElementById('modal-quote-text').textContent = randomQuote.text;
+            document.getElementById('modal-quote-ruby').textContent = randomQuote.ruby;
+
+            // カード情報のセット
+            const container = document.getElementById('reward-card-container');
+            container.className = `p-4 rounded-xl border-2 flex flex-col items-center justify-center relative overflow-hidden card-r${card.rarity}`;
+
+            document.getElementById('reward-card-rarity').textContent = `★${card.rarity} ${getRarityLabel(card.rarity)}`;
+            document.getElementById('reward-card-icon').innerHTML = `<i class="fa-solid ${card.icon}"></i>`;
+            document.getElementById('reward-card-name').textContent = card.name;
+            document.getElementById('reward-card-desc').textContent = card.desc;
+
+            // 表示アニメーション
+            modal.classList.remove('hidden');
+            setTimeout(() => {
+                inner.classList.remove('scale-95', 'opacity-0');
+                inner.classList.add('scale-100', 'opacity-100');
+            }, 10);
+        }
+
+        function hideRewardModal() {
+            const modal = document.getElementById('reward-modal');
+            const inner = document.getElementById('reward-card-inner');
+
+            inner.classList.remove('scale-100', 'opacity-100');
+            inner.classList.add('scale-95', 'opacity-0');
+            setTimeout(() => {
+                modal.classList.add('hidden');
+            }, 200);
+        }
+
+        function getRarityLabel(rarity) {
+            switch(rarity) {
+                case 1: return 'NORMAL';
+                case 2: return 'RARE';
+                case 3: return 'HIGH RARE';
+                case 4: return 'ULTRA RARE';
+                case 5: return 'SECRET UR';
+                default: return '';
+            }
+        }
+
+        /* ===================================================
+           図鑑 (コレクション) 描画
+           =================================================== */
+        let currentFilter = 'all';
+
+        function renderCollection() {
+            const grid = document.getElementById('collection-grid');
+            grid.innerHTML = '';
+
+            const ownedSet = new Set(state.inventory);
+
+            const filteredCards = CARDS_DATABASE.filter(card => {
+                if (currentFilter === 'monster') return card.type === 'monster';
+                if (currentFilter === 'weapon') return card.type === 'weapon';
+                return true;
+            });
+
+            filteredCards.forEach(card => {
+                const isOwned = ownedSet.has(card.id);
+                const count = state.inventory.filter(id => id === card.id).length;
+
+                const cardEl = document.createElement('div');
+                cardEl.className = `p-3 rounded-xl flex flex-col items-center justify-between relative overflow-hidden transition ${
+                    isOwned ? `card-r${card.rarity}` : 'bg-slate-950 border border-slate-800 opacity-60'
+                }`;
+
+                if (isOwned) {
+                    cardEl.innerHTML = `
+                        <div class="flex justify-between w-full items-center mb-1">
+                            <span class="text-[9px] font-cyber font-bold px-1.5 py-0.5 rounded bg-slate-950/80 text-amber-300 border border-amber-400/30">
+                                ★${card.rarity}
+                            </span>
+                            <span class="text-[10px] text-cyan-300 font-bold">x${count}</span>
+                        </div>
+                        <div class="text-3xl my-2 text-cyan-200">
+                            <i class="fa-solid ${card.icon}"></i>
+                        </div>
+                        <div class="text-xs font-bold text-white text-center line-clamp-1">${card.name}</div>
+                        <div class="text-[9px] text-slate-300 text-center mt-1 line-clamp-2">${card.desc}</div>
+                    `;
+                } else {
+                    // 未所持シルエット
+                    cardEl.innerHTML = `
+                        <div class="flex justify-between w-full items-center mb-1">
+                            <span class="text-[9px] font-cyber font-bold px-1.5 py-0.5 rounded bg-slate-900 text-slate-500">
+                                ★${card.rarity}
+                            </span>
+                            <span class="text-[10px] text-slate-600 font-bold">未獲得</span>
+                        </div>
+                        <div class="text-3xl my-2 text-slate-700">
+                            <i class="fa-solid fa-question"></i>
+                        </div>
+                        <div class="text-xs font-bold text-slate-500 text-center">？？？？？</div>
+                        <div class="text-[9px] text-slate-600 text-center mt-1">勤行でスタンプを押してゲットしよう！</div>
+                    `;
+                }
+
+                grid.appendChild(cardEl);
+            });
+        }
+
+        /* ===================================================
+           イベントリスナー各種設定
+           =================================================== */
+        document.addEventListener('DOMContentLoaded', () => {
+            initState();
+
+            // 月送りボタン
+            document.getElementById('prev-month').addEventListener('click', () => {
+                state.currentViewMonth--;
+                if (state.currentViewMonth < 0) {
+                    state.currentViewMonth = 11;
+                    state.currentViewYear--;
+                }
+                renderCalendar();
+            });
+
+            document.getElementById('next-month').addEventListener('click', () => {
+                state.currentViewMonth++;
+                if (state.currentViewMonth > 11) {
+                    state.currentViewMonth = 0;
+                    state.currentViewYear++;
+                }
+                renderCalendar();
+            });
+
+            // スタンプ選択ボタン
+            const stampBtns = document.querySelectorAll('.stamp-select-btn');
+            stampBtns.forEach(btn => {
+                btn.addEventListener('click', (e) => {
+                    stampBtns.forEach(b => {
+                        b.classList.remove('border-amber-400');
+                        b.classList.add('border-transparent');
+                    });
+                    const target = e.currentTarget;
+                    target.classList.remove('border-transparent');
+                    target.classList.add('border-amber-400');
+                    state.selectedStamp = target.dataset.stamp;
+                });
+            });
+
+            // タブ切り替え（カレンダー ⇄ 図鑑）
+            const viewCalendar = document.getElementById('view-calendar');
+            const viewCollection = document.getElementById('view-collection');
+            const navCalendar = document.getElementById('nav-calendar');
+            const navCollection = document.getElementById('nav-collection');
+
+            navCalendar.addEventListener('click', () => {
+                viewCalendar.classList.remove('hidden');
+                viewCalendar.classList.add('flex');
+                viewCollection.classList.add('hidden');
+                viewCollection.classList.remove('flex');
+
+                navCalendar.className = "flex-1 py-2 flex flex-col items-center gap-1 text-cyan-400 font-bold text-xs";
+                navCollection.className = "flex-1 py-2 flex flex-col items-center gap-1 text-slate-500 font-bold text-xs hover:text-slate-300 transition";
+            });
+
+            navCollection.addEventListener('click', () => {
+                viewCollection.classList.remove('hidden');
+                viewCollection.classList.add('flex');
+                viewCalendar.classList.add('hidden');
+                viewCalendar.classList.remove('flex');
+
+                navCollection.className = "flex-1 py-2 flex flex-col items-center gap-1 text-amber-400 font-bold text-xs";
+                navCalendar.className = "flex-1 py-2 flex flex-col items-center gap-1 text-slate-500 font-bold text-xs hover:text-slate-300 transition";
+            });
+
+            // 図鑑フィルタ切り替え
+            const fAll = document.getElementById('filter-all');
+            const fMonster = document.getElementById('filter-monster');
+            const fWeapon = document.getElementById('filter-weapon');
+
+            function updateFilterBtns(activeBtn) {
+                [fAll, fMonster, fWeapon].forEach(btn => {
+                    btn.className = "flex-1 py-1.5 bg-slate-800 text-slate-300 rounded-lg text-xs font-bold";
+                });
+                activeBtn.className = "flex-1 py-1.5 bg-cyan-600 text-white rounded-lg text-xs font-bold shadow";
+            }
+
+            fAll.addEventListener('click', () => { currentFilter = 'all'; updateFilterBtns(fAll); renderCollection(); });
+            fMonster.addEventListener('click', () => { currentFilter = 'monster'; updateFilterBtns(fMonster); renderCollection(); });
+            fWeapon.addEventListener('click', () => { currentFilter = 'weapon'; updateFilterBtns(fWeapon); renderCollection(); });
+
+            // モーダル閉じる
+            document.getElementById('close-modal-btn').addEventListener('click', hideRewardModal);
+        });
+    </script>
+</body>
+</html>
