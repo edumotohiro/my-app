@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>読書ペースメーカー</title>
+<style>
+:root{--bg:#f5f3ee;--card:#fff;--ink:#27332e;--muted:#68756f;--accent:#28745c;--line:#e1e7e2;--warn:#a45b18;--danger:#a33b3b}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--ink);font-family:-apple-system,BlinkMacSystemFont,"Hiragino Kaku Gothic ProN",Meiryo,sans-serif;line-height:1.5}
+header{background:#245d4b;color:white;padding:22px 16px 18px}header h1{font-size:23px;margin:0 0 4px}header p{font-size:13px;margin:0;color:#e2f0e8}
+main{max-width:720px;margin:auto;padding:14px 12px 48px}.card{background:var(--card);border-radius:16px;padding:16px;margin-bottom:13px;box-shadow:0 2px 8px #1b3c2b0a;border:1px solid var(--line)}
+h2{font-size:17px;margin:0 0 12px}h3{font-size:15px;margin:0 0 7px}.muted{color:var(--muted);font-size:12px}.grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}.field{margin-bottom:10px}.field label{display:block;font-size:12px;font-weight:700;margin-bottom:4px;color:#53635a}
+input,select{font:inherit;width:100%;padding:11px;border:1px solid #cbd7ce;border-radius:10px;background:#fff;color:var(--ink);min-width:0}button{font:inherit;border:0;border-radius:10px;padding:10px 13px;font-weight:700;cursor:pointer}.primary{background:var(--accent);color:#fff}.secondary{background:#e9f1ec;color:#245d4b}.danger{background:#f9e9e9;color:var(--danger)}.small{font-size:12px;padding:7px 9px}.actions{display:flex;gap:7px;flex-wrap:wrap;margin-top:9px}.book{border:1px solid var(--line);border-radius:13px;padding:13px;margin-top:10px}.book-top{display:flex;justify-content:space-between;gap:10px;align-items:start}.book-title{font-weight:800;font-size:16px;overflow-wrap:anywhere}.pill{font-size:11px;background:#e9f1ec;color:#245d4b;border-radius:99px;padding:3px 8px;white-space:nowrap}.stats{display:grid;grid-template-columns:repeat(3,1fr);gap:7px;margin:12px 0}.stat{background:#f4f7f4;border-radius:10px;padding:9px;text-align:center}.stat b{display:block;font-size:19px}.stat span{font-size:11px;color:var(--muted)}.progress{height:7px;border-radius:99px;background:#e6ece7;overflow:hidden;margin:7px 0}.progress div{height:100%;background:#4a9b77}.log{border-top:1px solid var(--line);padding:10px 0}.log:first-child{border-top:0}.logrow{display:flex;gap:8px;justify-content:space-between;align-items:center}.loginfo{min-width:0}.loginfo strong{display:block}.loginfo span{font-size:12px;color:var(--muted)}.empty{padding:15px;text-align:center;color:var(--muted);font-size:13px}.notice{padding:10px;border-radius:10px;background:#fff5e8;color:#79501f;font-size:12px;margin-top:9px}.hidden{display:none!important}.section-head{display:flex;justify-content:space-between;align-items:center;gap:8px}
+@media(max-width:420px){.grid{grid-template-columns:1fr 1fr}.card{padding:13px}.stats{gap:5px}.stat b{font-size:17px}}
+</style>
+</head>
+<body>
+<header><h1>📚 読書ペースメーカー</h1><p>現在のページを記録して、読書の進み具合を見える化</p></header>
+<main>
+<section class="card">
+<h2>本を登録</h2>
+<div class="field"><label for="title">本のタイトル</label><input id="title" placeholder="例：思考の整理学"></div>
+<div class="grid">
+<div class="field"><label for="total">全ページ数</label><input id="total" type="number" min="1" inputmode="numeric" placeholder="280"></div>
+<div class="field"><label for="due">返却期限</label><input id="due" type="date"></div>
+</div>
+<div class="field"><label for="start">現在のページ（まだ読み始めていなければ0）</label><input id="start" type="number" min="0" inputmode="numeric" value="0"></div>
+<button class="primary" id="addBook">本を登録する</button>
+<p class="muted">記録はこのブラウザー内に保存されます。ブラウザーのデータ消去などで消える可能性があります。</p>
+</section>
+
+<section class="card">
+<div class="section-head"><h2 style="margin:0">読書中の本</h2><span id="bookCount" class="pill">0冊</span></div>
+<div id="books"><div class="empty">まだ本が登録されていません。</div></div>
+</section>
+
+<section class="card">
+<div class="section-head"><h2 style="margin:0">読書履歴</h2><select id="historyFilter" style="width:auto;max-width:55%"><option value="all">すべての本</option></select></div>
+<div id="history" style="margin-top:10px"><div class="empty">記録はまだありません。</div></div>
+</section>
+
+<section class="card">
+<h2>データのバックアップ</h2>
+<p class="muted">端末の変更やブラウザーデータ消去に備え、定期的に書き出してください。書き出したJSONファイルを読み込むと、登録した本と履歴を復元できます。</p>
+<div class="actions"><button class="secondary" id="exportData">データを書き出す</button><label class="secondary" style="display:inline-block;cursor:pointer;padding:10px 13px;border-radius:10px;font-weight:700">データを読み込む<input id="importData" type="file" accept=".json,application/json" style="display:none"></label></div>
+</section>
+</main>
+<script>
+const KEY='reading_pace_maker_v2';
+let state={books:[],logs:[]};
+const $=id=>document.getElementById(id);
+const today=()=>{const d=new Date();return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`};
+const dateText=s=>s?new Date(s+'T12:00:00').toLocaleDateString('ja-JP',{year:'numeric',month:'numeric',day:'numeric'}):'期限未設定';
+const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+function load(){try{const x=JSON.parse(localStorage.getItem(KEY)||'null');if(x&&Array.isArray(x.books)&&Array.isArray(x.logs))state=x}catch(e){console.warn(e)}}
+function save(){localStorage.setItem(KEY,JSON.stringify(state))}
+function uid(){return Date.now().toString(36)+Math.random().toString(36).slice(2,8)}
+function logsFor(bookId){return state.logs.filter(x=>x.bookId===bookId).sort((a,b)=>a.at-b.at)}
+function baselinePage(bookId){const b=state.books.find(x=>x.id===bookId);return Number(b?.startPage||0)}
+function deltaFor(log){const arr=logsFor(log.bookId),i=arr.findIndex(x=>x.id===log.id);const prev=i>0?Number(arr[i-1].page):baselinePage(log.bookId);return Number(log.page)-prev}
+function allDeltas(){const map={};for(const b of state.books){let prev=baselinePage(b.id);for(const l of logsFor(b.id)){map[l.id]=Number(l.page)-prev;prev=Number(l.page)}}return map}
+function dailyTotal(bookId,date){const deltas=allDeltas();return state.logs.filter(l=>l.bookId===bookId&&l.date===date).reduce((s,l)=>s+(deltas[l.id]||0),0)}
+function addBook(){
+ const title=$('title').value.trim(),total=Number($('total').value),due=$('due').value,start=Number($('start').value||0);
+ if(!title){alert('本のタイトルを入力してください');return}
+ if(!Number.isInteger(total)||total<1){alert('全ページ数を入力してください');return}
+ if(!Number.isInteger(start)||start<0||start>total){alert('現在のページは0〜全ページ数の範囲で入力してください');return}
+ const b={id:uid(),title,total,due,startPage:start,createdAt:Date.now()};
+ state.books.push(b);
+ if(start>0)state.logs.push({id:uid(),bookId:b.id,page:start,date:today(),at:Date.now(),createdAt:Date.now()});
+ save();$('title').value='';$('total').value='';$('start').value='0';$('due').value='';render();
+}
+function recordProgress(id){
+ const b=state.books.find(x=>x.id===id);if(!b)return;
+ const last=logsFor(id).slice(-1)[0],suggest=last?last.page:baselinePage(id);
+ const raw=prompt(`「${b.title}」\n現在、何ページまで読みましたか？`,String(suggest));
+ if(raw===null)return;const page=Number(raw);
+ if(!Number.isInteger(page)||page<0||page>b.total){alert(`0〜${b.total}の整数で入力してください`);return}
+ if(last&&page<Number(last.page)){
+   if(!confirm(`前回の${last.page}ページより小さい${page}ページが入力されています。\n過去の記録を修正する場合は履歴の「修正」を使ってください。\nこのページ番号で新しい記録を追加しますか？`))return;
+ }
+ state.logs.push({id:uid(),bookId:id,page,date:today(),at:Date.now(),createdAt:Date.now()});
+ save();render();
+}
+function editLog(id){
+ const l=state.logs.find(x=>x.id===id);if(!l)return;const b=state.books.find(x=>x.id===l.bookId);if(!b)return;
+ const raw=prompt(`「${b.title}」\n記録した現在のページ番号を修正`,String(l.page));if(raw===null)return;
+ const page=Number(raw);if(!Number.isInteger(page)||page<0||page>b.total){alert(`0〜${b.total}の整数で入力してください`);return}
+ const newDate=prompt('記録日を修正する場合は YYYY-MM-DD で入力（変更しない場合も同じ日付を入力）',l.date);if(newDate===null)return;
+ if(!/^\d{4}-\d{2}-\d{2}$/.test(newDate)){alert('日付は YYYY-MM-DD 形式で入力してください');return}
+ l.page=page;l.date=newDate;save();render();
+}
+function deleteLog(id){const l=state.logs.find(x=>x.id===id);if(!l)return;if(!confirm('この読書記録を削除しますか？削除後、同日合計や後続記録の読書量も再計算されます。'))return;state.logs=state.logs.filter(x=>x.id!==id);save();render()}
+function deleteBook(id){const b=state.books.find(x=>x.id===id);if(!b)return;if(!confirm(`「${b.title}」とその読書履歴をすべて削除しますか？この操作は取り消せません。`))return;state.books=state.books.filter(x=>x.id!==id);state.logs=state.logs.filter(x=>x.bookId!==id);save();render()}
+function renderBooks(){
+ $('bookCount').textContent=`${state.books.length}冊`;
+ if(!state.books.length){$('books').innerHTML='<div class="empty">まだ本が登録されていません。</div>';return}
+ const deltas=allDeltas();
+ $('books').innerHTML=state.books.map(b=>{
+   const arr=logsFor(b.id),last=arr[arr.length-1],page=last?Number(last.page):baselinePage(b.id),percent=Math.min(100,Math.round(page/b.total*100));
+   const remain=Math.max(0,b.total-page),days=b.due?Math.ceil((new Date(b.due+'T23:59:59')-new Date())/86400000):null;
+   const recentDate=today(),todayN=dailyTotal(b.id,recentDate);
+   let pace='期限を設定すると計算します';if(days!==null){if(remain===0)pace='読了！';else if(days<=0)pace=`期限超過：残り${remain}ページ`;else pace=`必要ペース：約${Math.ceil(remain/days)}ページ/日（残り${days}日）`}
+   return `<div class="book"><div class="book-top"><div class="book-title">${esc(b.title)}</div><span class="pill">${percent}%</span></div>
+   <div class="progress"><div style="width:${percent}%"></div></div>
+   <div class="stats"><div class="stat"><b>${page}</b><span>現在のページ</span></div><div class="stat"><b>${remain}</b><span>残りページ</span></div><div class="stat"><b>${todayN}</b><span>今日読んだページ</span></div></div>
+   <div class="muted">全${b.total}ページ ／ 返却期限：${dateText(b.due)}<br>${esc(pace)}</div>
+   <div class="actions"><button class="primary" onclick="recordProgress('${b.id}')">現在のページを記録</button><button class="secondary small" onclick="recordProgress('${b.id}')">もう一度記録</button><button class="danger small" onclick="deleteBook('${b.id}')">本を削除</button></div></div>`
+ }).join('');
+}
+function renderFilter(){
+ const old=$('historyFilter').value;
+ $('historyFilter').innerHTML='<option value="all">すべての本</option>'+state.books.map(b=>`<option value="${b.id}">${esc(b.title)}</option>`).join('');
+ if([...$('historyFilter').options].some(o=>o.value===old))$('historyFilter').value=old;
+}
+function renderHistory(){
+ const filter=$('historyFilter').value,deltas=allDeltas();
+ const rows=state.logs.filter(l=>filter==='all'||l.bookId===filter).sort((a,b)=>b.at-a.at);
+ if(!rows.length){$('history').innerHTML='<div class="empty">記録はまだありません。</div>';return}
+ const daily={};for(const l of rows){const k=l.bookId+'|'+l.date;(daily[k]??=[]).push(l)}
+ $('history').innerHTML=rows.map(l=>{
+  const b=state.books.find(x=>x.id===l.bookId);if(!b)return '';
+  const daySum=dailyTotal(l.bookId,l.date),delta=deltas[l.id]??0;
+  return `<div class="log"><div class="logrow"><div class="loginfo"><strong>${esc(b.title)}</strong><span>${dateText(l.date)} ・ 現在 ${l.page}ページ</span><br><span>今回の増加：${delta}ページ ／ この日の合計：${daySum}ページ</span></div><div class="actions" style="margin:0;flex-shrink:0"><button class="secondary small" onclick="editLog('${l.id}')">修正</button><button class="danger small" onclick="deleteLog('${l.id}')">削除</button></div></div></div>`
+ }).join('');
+}
+function render(){renderFilter();renderBooks();renderHistory()}
+$('addBook').addEventListener('click',addBook);
+$('historyFilter').addEventListener('change',renderHistory);
+$('exportData').addEventListener('click',()=>{const blob=new Blob([JSON.stringify(state,null,2)],{type:'application/json'});const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='reading-pace-backup-'+today()+'.json';a.click();URL.revokeObjectURL(a.href)});
+function convertBackup(parsed){
+ if(Array.isArray(parsed.books)&&Array.isArray(parsed.logs))return parsed;
+ if(parsed.app==='読書ペースメーカー'&&Array.isArray(parsed.books)){
+  const books=[],logs=[];let seq=0;
+  for(const old of parsed.books){
+   const history=Array.isArray(old.history)?old.history:[];
+   const sorted=history.map((h,i)=>({...h,_i:i})).sort((a,b)=>String(a.date).localeCompare(String(b.date))||a._i-b._i);
+   const startPage=sorted.length?Number(sorted[0].from||0):Number(old.current||0);
+   const book={id:String(old.id||uid()),title:String(old.title||'タイトル未設定'),total:Number(old.total||1),due:String(old.due||''),startPage,createdAt:Date.now()+seq++};
+   books.push(book);
+   for(const h of sorted){
+    const page=Number(h.to??(Number(h.from||0)+Number(h.pages||0)));
+    logs.push({id:uid(),bookId:book.id,page,date:String(h.date||today()),at:Date.parse(String(h.date||today())+'T12:00:00')+seq++,createdAt:Date.now()+seq++});
+   }
+  }
+  return {books,logs};
+ }
+ throw new Error('format');
+}
+$('importData').addEventListener('change',async e=>{const f=e.target.files[0];if(!f)return;try{const parsed=JSON.parse(await f.text());const converted=convertBackup(parsed);if(!Array.isArray(converted.books)||!Array.isArray(converted.logs))throw new Error('format');if(!confirm('現在の本と履歴を、読み込むデータで置き換えますか？先に書き出しておくことをおすすめします。'))return;state=converted;save();render();alert('データを読み込みました')}catch(err){console.error(err);alert('読み込めるバックアップファイルではありません')}finally{e.target.value=''}});
+load();render();
+</script>
+</body>
+</html>
