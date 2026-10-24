@@ -1,0 +1,233 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>勤行ストリーク・モンスターズ｜冒険図鑑</title>
+<style>
+:root{--bg:#0b1020;--panel:#151d31;--panel2:#101729;--line:#2a3855;--cyan:#53e5ff;--gold:#ffd166;--text:#f4f7ff;--muted:#a8b5ce}
+*{box-sizing:border-box}body{margin:0;background:radial-gradient(ellipse at top,#162749 0,#0b1020 55%);color:var(--text);font-family:-apple-system,BlinkMacSystemFont,"Hiragino Kaku Gothic ProN","Yu Gothic",sans-serif;max-width:620px;margin:auto;min-height:100vh;padding-bottom:84px}button,select{font:inherit}button{cursor:pointer;color:inherit;border:1px solid var(--line);background:#1a2741;border-radius:12px;padding:10px}button:active{transform:scale(.98)}.top{position:sticky;top:0;z-index:5;background:#0b1020ed;backdrop-filter:blur(12px);padding:14px;border-bottom:1px solid #53e5ff44}.brand{display:flex;align-items:center;justify-content:space-between;gap:8px}.brand h1{font-size:19px;margin:0;color:var(--cyan)}.rank{font-size:11px;border:1px solid #53e5ff66;border-radius:99px;padding:6px 9px;color:var(--gold)}.stats{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-top:12px}.stat{background:var(--panel2);border:1px solid var(--line);border-radius:12px;padding:9px;text-align:center}.stat small{display:block;color:var(--muted);font-size:10px}.stat b{font-size:19px;color:var(--gold)}main{padding:14px}.panel{background:#151d31e8;border:1px solid var(--line);border-radius:16px;padding:13px;margin-bottom:13px}.section-title{font-weight:900;color:var(--cyan);margin:0 0 10px;font-size:16px}.mission{display:flex;align-items:center;justify-content:space-between;gap:10px;background:linear-gradient(120deg,#17365a,#17203a);border:1px solid #53e5ff55;border-radius:14px;padding:13px;margin-bottom:13px}.mission strong{display:block}.muted{color:var(--muted);font-size:12px}.calendar-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px}.calendar-head strong{color:var(--cyan)}.week,.days{display:grid;grid-template-columns:repeat(7,1fr);gap:5px;text-align:center}.week{font-size:11px;color:var(--muted);margin-bottom:6px}.day{min-width:0;min-height:57px;padding:4px 0;border-radius:10px;background:#0d1425;border:1px solid #28334b;display:flex;flex-direction:column;align-items:center;justify-content:space-between;font-size:11px}.day.today{border:2px solid var(--cyan)}.day.stamped{background:#23314a}.day.future{opacity:.28}.day .stamp{font-size:21px;line-height:1.2}.day .daynum{color:var(--muted)}.stamp-row{display:flex;gap:8px;justify-content:space-around;margin-top:10px}.stamp-btn{width:48px;height:46px;font-size:22px}.stamp-btn.active{border:2px solid var(--gold);box-shadow:0 0 12px #ffd16644}.primary{background:linear-gradient(100deg,#f9a826,#ffda70);color:#231600;border:0;font-weight:900}.tabs{position:fixed;bottom:0;left:50%;transform:translateX(-50%);width:min(620px,100%);display:grid;grid-template-columns:repeat(4,1fr);background:#080d19f5;border-top:1px solid var(--line);padding:7px 5px calc(7px + env(safe-area-inset-bottom));z-index:10}.tabs button{border:0;background:transparent;color:var(--muted);font-size:11px;padding:7px 2px}.tabs button.active{color:var(--cyan);background:#17304a;border-radius:10px}.tabs span{display:block;font-size:20px;margin-bottom:2px}.hidden{display:none!important}.progress{height:8px;background:#0a1020;border-radius:99px;overflow:hidden;margin:8px 0}.progress div{height:100%;background:linear-gradient(90deg,var(--cyan),var(--gold));width:0}.filters{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:10px}.filters button{font-size:11px;padding:7px 9px}.filters button.active{background:#176078;border-color:var(--cyan)}.grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:9px}.card{min-width:0;border-radius:14px;border:1px solid var(--line);padding:10px;text-align:center;position:relative;overflow:hidden;background:#101729}.card.r1{border-color:#77849c}.card.r2{border-color:#4a9eff;background:linear-gradient(145deg,#172d54,#101729)}.card.r3{border-color:#40d6a2;background:linear-gradient(145deg,#12493f,#101729)}.card.r4{border-color:#c084fc;background:linear-gradient(145deg,#44245e,#101729)}.card.r5{border-color:#ffd166;background:linear-gradient(145deg,#65421c,#101729);box-shadow:0 0 12px #ffd16624}.card .emoji{font-size:35px;margin:8px 0}.card .name{font-size:13px;font-weight:900;line-height:1.4}.card .desc{font-size:10px;color:var(--muted);line-height:1.5;margin-top:5px}.card .tag{font-size:10px;color:var(--gold)}.card.locked{opacity:.75;background:#0c1220}.card.locked .emoji{filter:brightness(.15);color:#3b4961}.card .count{position:absolute;right:7px;top:7px;font-size:10px;background:#050a15aa;border-radius:8px;padding:3px 5px}.two{display:grid;grid-template-columns:1fr 1fr;gap:8px}.achievement{display:flex;align-items:center;gap:10px;padding:10px;border:1px solid var(--line);border-radius:12px;margin-bottom:8px;background:#101729}.achievement.done{border-color:#ffd16677}.achievement .badge{font-size:24px}.achievement b{font-size:12px}.achievement p{margin:3px 0 0;color:var(--muted);font-size:10px}.achievement .status{margin-left:auto;font-size:10px;color:var(--gold)}.region{display:flex;gap:10px;align-items:center;padding:10px;border:1px solid var(--line);border-radius:12px;margin-bottom:8px}.region .emoji{font-size:30px}.region .info{flex:1}.region b{font-size:13px}.region p{font-size:10px;color:var(--muted);margin:4px 0}.region.locked{opacity:.55}.modal{position:fixed;inset:0;background:#030713eF;z-index:20;display:flex;align-items:center;justify-content:center;padding:18px}.modalbox{width:min(430px,100%);background:#151d31;border:2px solid var(--gold);border-radius:22px;padding:20px;text-align:center;box-shadow:0 0 50px #ffd16622}.modalbox h2{margin:0 0 8px}.reward-emoji{font-size:70px;margin:10px}.rarity{color:var(--gold);font-size:12px}.modalbox .desc{color:var(--muted);font-size:13px;line-height:1.6;margin:8px 0 16px}.close{width:100%;margin-top:8px}.small{font-size:11px}.notice{background:#102a3b;border:1px solid #53e5ff55;padding:10px;border-radius:12px;font-size:11px;color:#c5f5ff;margin-bottom:12px}.story{font-size:13px;line-height:1.8;color:#dbe7ff}.footer-note{font-size:10px;color:#8290aa;text-align:center;margin:15px 0}
+</style>
+</head>
+<body>
+<header class="top">
+ <div class="brand"><h1>⚡ 勤行ストリーク</h1><div class="rank" id="rank">🌱 勤行ビギナー</div></div>
+ <div class="stats">
+  <div class="stat"><small>🔥 連続達成</small><b id="streak">0</b><small>日</small></div>
+  <div class="stat"><small>📚 発見した種類</small><b id="ownedKinds">0</b><small id="ownedTotal">/100 種</small></div>
+  <div class="stat"><small>🏆 図鑑完成率</small><b id="completion">0%</b><small>コンプリート</small></div>
+ </div>
+</header>
+<main>
+<section id="view-calendar">
+ <div class="mission"><div><strong>📜 きょうのミッション</strong><span class="muted">勤行をして、冒険の仲間を見つけよう！</span></div><b id="todayStatus">未達成</b></div>
+ <div class="panel">
+  <div class="calendar-head"><button id="prev">‹</button><strong id="monthTitle"></strong><button id="next">›</button></div>
+  <div class="week"><span>日</span><span>月</span><span>火</span><span>水</span><span>木</span><span>金</span><span>土</span></div>
+  <div class="days" id="days"></div>
+  <div class="muted" style="margin-top:8px">※スタンプは今日だけ押せます。過去の記録は見るだけです。</div>
+ </div>
+ <div class="panel">
+  <div class="section-title">🎨 スタンプをえらぶ</div>
+  <div class="stamp-row">
+   <button class="stamp-btn active" data-stamp="fire">🔥</button><button class="stamp-btn" data-stamp="bolt">⚡</button><button class="stamp-btn" data-stamp="dragon">🐉</button><button class="stamp-btn" data-stamp="crown">👑</button>
+  </div>
+  <button class="primary" id="stampToday" style="width:100%;margin-top:12px">勤行できた！ スタンプを押す</button>
+ </div>
+ <div class="panel"><div class="section-title">🌟 冒険のものがたり</div><p class="story">毎日の小さな一歩が、ふしぎな世界への道をひらく。勤行のスタンプを重ねるたび、仲間との出会いが待っている。あせらず、自分のペースで冒険しよう！</p><div class="muted" id="nextGoal">次の目標を計算中…</div></div>
+</section>
+<section id="view-book" class="hidden">
+ <div class="panel"><div class="section-title">📖 モンスター＆そうび図鑑</div><div class="muted" id="bookProgress">発見 0 / 100</div><div class="progress"><div id="bookBar"></div></div>
+  <div class="filters"><button class="active" data-filter="all">すべて</button><button data-filter="monster">モンスター</button><button data-filter="weapon">そうび</button><button data-filter="owned">発見済み</button><button data-filter="missing">未発見</button></div>
+  <div class="filters"><button class="active" data-rarity="all">全レア度</button><button data-rarity="1">★1</button><button data-rarity="2">★2</button><button data-rarity="3">★3</button><button data-rarity="4">★4</button><button data-rarity="5">★5</button></div>
+ </div>
+ <div class="grid" id="cardGrid"></div>
+</section>
+<section id="view-grow" class="hidden">
+ <div class="panel"><div class="section-title">🌱 進化・育成</div><p class="muted">同じカードを集めると、進化できる仲間がいるよ。進化しても、前の姿は図鑑に残るよ。</p><div id="evolutionList"></div></div>
+ <div class="panel"><div class="section-title">🗺️ エリア探索</div><p class="muted">勤行を続けて、新しい世界をひらこう。</p><div id="regionList"></div></div>
+</section>
+<section id="view-achieve" class="hidden">
+ <div class="panel"><div class="section-title">🏆 実績・称号</div><p class="muted">勤行の積み重ねと、図鑑の発見を記録するよ。達成した実績はずっと残るよ。</p><div id="achievementList"></div></div>
+ <div class="panel"><div class="section-title">🎁 データのバックアップ</div><p class="muted">機種変更やブラウザのデータ消去に備えて、バックアップを保存できます。</p><button id="exportData" style="width:100%">バックアップを書き出す</button><label style="display:block;margin-top:9px;font-size:12px">バックアップを読み込む<input id="importData" type="file" accept="application/json" style="display:block;margin-top:7px;width:100%"></label><button id="resetData" style="width:100%;margin-top:12px;border-color:#f87171;color:#fca5a5">データをリセット</button></div>
+</section>
+<div class="footer-note">データはこのブラウザ内に保存されます。ときどきバックアップを取ってね。</div>
+</main>
+<nav class="tabs">
+ <button class="active" data-view="calendar"><span>📅</span>カレンダー</button>
+ <button data-view="book"><span>📚</span>図鑑</button>
+ <button data-view="grow"><span>🐣</span>進化・探索</button>
+ <button data-view="achieve"><span>🏆</span>実績</button>
+</nav>
+<div id="modal" class="modal hidden"><div class="modalbox"><div id="modalTop" class="rarity">MISSION COMPLETE!</div><h2 id="modalTitle">勤行達成！</h2><div id="modalEmoji" class="reward-emoji">🐉</div><div id="modalRarity" class="rarity"></div><h3 id="modalName"></h3><div id="modalDesc" class="desc"></div><div id="modalExtra" class="notice hidden"></div><button id="modalClose" class="primary close">OK！</button></div></div>
+<script>
+const RARITY_CHANCE=[25,30,25,15,5];
+const original=[
+['スライムドラコ','monster',1,'🐲','まいにち しゅぎょうする ちいさなドラゴン。','はじまりの森'],
+['みならいナイト','monster',1,'🛡️','ぼうけんを はじめたばかりの きし。','はじまりの森'],
+['木のたて','weapon',1,'🪵','じょうぶな木でできた たて。','はじまりの森'],
+['銅のけん','weapon',1,'🗡️','かるくてつかいやすい 基本のけん。','はじまりの森'],
+['ウインドウルフ','monster',2,'🐺','かぜのように はやく はしる おおかみ。','はじまりの森'],
+['ファイヤバード','monster',2,'🐦','あかい つばさをもつ ほのおのとり。','はじまりの森'],
+['鉄のよろい','weapon',2,'🥋','しっかり身をまもる てつのよろい。','はじまりの森'],
+['バトルアックス','weapon',2,'🪓','パワーあふれる 大きなおの。','はじまりの森'],
+['サンダービースト','monster',3,'🐆','いなずまを まとう でんせつのけもの。','はじまりの森'],
+['アクアタイタン','monster',3,'🦛','うみのつよいパワーをひめた きょじん。','はじまりの森'],
+['魔法のつえ','weapon',3,'🪄','ふしぎな光をはなつ まほうのつえ。','はじまりの森'],
+['シルバーブレード','weapon',3,'⚔️','ぎんいろに かがやく するどいけん。','はじまりの森'],
+['サイバーフェニックス','monster',4,'🦅','なんどでもよみがえる 未来の伝説鳥。','炎の火山'],
+['ダークナイト・レオン','monster',4,'🦹','やみをつらぬく くろききし。','炎の火山'],
+['龍神のたて','weapon',4,'🐉','りゅうのうろこでつくられた たて。','炎の火山'],
+['プラズマキャノン','weapon',4,'💥','強力なエナジーをはなつ ぶき。','炎の火山'],
+['バハムートドラゴン','monster',5,'🐉','てんくうをおさめる りゅうのおう。','星空の神殿'],
+['パラディン・アーサー','monster',5,'🤺','光のちからで世界をすくう 聖なるきし。','星空の神殿'],
+['聖剣エクスカリバー','weapon',5,'⚔️','選ばれし勇者だけがもてる でんせつのけん。','星空の神殿'],
+['王者のカンムリ','weapon',5,'👑','継続をたっせいした 王者のかんむり。','星空の神殿'],
+['こけまる','monster',1,'🌱','森のこけから生まれた のんびりや。','はじまりの森'],
+['つちのこ','monster',1,'🪱','じめんの中を すいすいすすむ。','はじまりの森'],
+['まめゴーレム','monster',1,'🪨','小さいけれど ちからもち。','はじまりの森'],
+['ひかりコウモリ','monster',1,'🦇','夜道を小さくてらしてくれる。','はじまりの森'],
+['木のぼう','weapon',1,'🪵','はじめてのぼうけんにぴったり。','はじまりの森'],
+['旅人のぼうし','weapon',1,'👒','日ざしから頭をまもる。','はじまりの森'],
+['やくそうポーチ','weapon',1,'🧪','小さな道具が入るポーチ。','はじまりの森'],
+['布のマント','weapon',1,'🧣','風をふせぐ かるいマント。','はじまりの森'],
+['ミストキャット','monster',2,'🐈','きりの中からあらわれる ねこ。','はじまりの森'],
+['リーフラビット','monster',2,'🐇','葉っぱの耳で森の音をきく。','はじまりの森'],
+['ほのおトカゲ','monster',2,'🦎','しっぽの先が ぽっと光る。','炎の火山'],
+['こおりペンギン','monster',2,'🐧','つめたい息で氷をつくる。','はじまりの森'],
+['みずたまクラゲ','monster',2,'🪼','水の中をふわふわただよう。','はじまりの森'],
+['いわカメ','monster',2,'🐢','かたいこうらでみんなを守る。','はじまりの森'],
+['風切りのゆみ','weapon',2,'🏹','風をきってとぶ ゆみ。','はじまりの森'],
+['星くずのリング','weapon',2,'💍','小さな星の光をたくわえる。','はじまりの森'],
+['旅人のブーツ','weapon',2,'🥾','長い道のりを歩けるブーツ。','はじまりの森'],
+['かえんナックル','weapon',2,'🥊','こぶしに炎の力をまとわせる。','炎の火山'],
+['しずくのロッド','weapon',2,'💧','水の力をひきだすつえ。','はじまりの森'],
+['こだまフクロウ','monster',3,'🦉','森のひみつを知っているフクロウ。','はじまりの森'],
+['ブリザードフォックス','monster',3,'🦊','雪の嵐をまとって走るきつね。','はじまりの森'],
+['マグマタートル','monster',3,'🐢','からだの中にマグマが流れる。','炎の火山'],
+['ムーンラビット','monster',3,'🌙','月の光を集めて跳ねる。','星空の神殿'],
+['クリスタルゴーレム','monster',3,'💎','水晶でできた かたい守り手。','星空の神殿'],
+['どくろスコーピオン','monster',3,'🦂','砂の下にかくれている。','炎の火山'],
+['森のまもり手','monster',3,'🦌','森の木々を守る やさしいけもの。','はじまりの森'],
+['雷鳴のハンマー','weapon',3,'🔨','雷の音がひびくハンマー。','炎の火山'],
+['月影のダガー','weapon',3,'🗡️','月明かりのように するどい。','星空の神殿'],
+['守護者のたて','weapon',3,'🛡️','仲間を守る力をもつ たて。','はじまりの森'],
+['賢者のローブ','weapon',3,'🥼','知恵の力を高めるローブ。','星空の神殿'],
+['虹色の弓','weapon',3,'🏹','七色の矢を放つ ゆみ。','星空の神殿'],
+['竜のうろこよろい','weapon',3,'🥋','竜のうろこで作られたよろい。','炎の火山'],
+['フレアドラゴン','monster',4,'🐲','火山の奥にすむ ほのおの竜。','炎の火山'],
+['テンペストイーグル','monster',4,'🦅','嵐をよび空をかける大ワシ。','炎の火山'],
+['深海のクラーケン','monster',4,'🐙','深い海の底を守る巨大な魔物。','星空の神殿'],
+['ナイトメアホース','monster',4,'🐎','夢の世界をかけぬける黒い馬。','星空の神殿'],
+['桜花の精霊','monster',4,'🌸','春の花びらから生まれた精霊。','はじまりの森'],
+['時空の番人','monster',4,'⏳','時間の道を見守る ふしぎな番人。','星空の神殿'],
+['流星のランス','weapon',4,'🔱','流れ星の力をやどしたやり。','星空の神殿'],
+['太陽のよろい','weapon',4,'☀️','太陽の光をはねかえすよろい。','炎の火山'],
+['蒼海のトライデント','weapon',4,'🔱','海の王が使ったという三つまたのやり。','星空の神殿'],
+['幻影のマント','weapon',4,'🧥','姿をかくす不思議なマント。','星空の神殿'],
+['竜王の大剣','weapon',4,'🗡️','竜王の力がねむる大剣。','炎の火山'],
+['星読みの冠','weapon',4,'👑','星の動きを読みとく冠。','星空の神殿'],
+['創世のドラゴン','monster',5,'🐉','世界のはじまりを知る伝説の竜。','星空の神殿'],
+['虹翼ユニコーン','monster',5,'🦄','七色の翼をもつ奇跡のけもの。','星空の神殿'],
+['無限スライム','monster',5,'🟣','姿を変え続ける ふしぎな存在。','星空の神殿'],
+['白銀のフェンリル','monster',5,'🐺','氷の星から来た伝説の狼。','星空の神殿'],
+['黄金の守護騎士','monster',5,'🤖','大切なものを守り続ける騎士。','星空の神殿'],
+['天使の羽衣','weapon',5,'🪽','空を飛ぶ力をくれる伝説の衣。','星空の神殿'],
+['無限の魔導書','weapon',5,'📖','開くたびに新しい魔法が現れる。','星空の神殿'],
+['世界樹の杖','weapon',5,'🌳','世界樹の生命力を秘めた杖。','星空の神殿'],
+['竜王の盾','weapon',5,'🛡️','どんな嵐にも負けない伝説の盾。','星空の神殿'],
+['銀河の弓','weapon',5,'🌌','星々の光を矢に変える弓。','星空の神殿'],
+['しずくスライム','monster',1,'💧','水たまりから生まれた小さな仲間。','はじまりの森'],
+['こだまリス','monster',1,'🐿️','森の声を聞き分ける元気なリス。','はじまりの森'],
+['ひだまりヒヨコ','monster',1,'🐥','あたたかい光が大好きなヒヨコ。','はじまりの森'],
+['きのこマーチ','monster',1,'🍄','雨の日に行進する小さなきのこ。','はじまりの森'],
+['石ころスピリット','monster',1,'🪨','道ばたの石に宿った精霊。','はじまりの森'],
+['旅立ちのナイフ','weapon',1,'🔪','冒険の最初に手にする小さなナイフ。','はじまりの森'],
+['木のぼうし','weapon',1,'🪖','木の実で飾った手作りのぼうし。','はじまりの森'],
+['小さなランタン','weapon',1,'🏮','暗い道をやさしく照らす。','はじまりの森'],
+['風のピクシー','monster',2,'🧚','ひらひら飛んで風の道を教える。','はじまりの森'],
+['こはくビートル','monster',2,'🪲','こはく色のこうらを持つ虫の戦士。','はじまりの森'],
+['ほたるドラゴン','monster',2,'✨','夜になると体がほたるのように光る。','はじまりの森'],
+['サンドフォックス','monster',2,'🦊','砂の上を音もなく走るきつね。','炎の火山'],
+['旅人のコンパス','weapon',2,'🧭','迷ったときに進む道を示してくれる。','はじまりの森'],
+['風まきマント','weapon',2,'🧥','風をつかまえて軽やかに進める。','はじまりの森'],
+['火山のランタン','weapon',2,'🔥','熱い場所でも消えない灯り。','炎の火山'],
+['森羅のバジリスク','monster',3,'🐍','森の奥で古い知恵を守る大蛇。','はじまりの森'],
+['珊瑚のセイレーン','monster',3,'🧜','歌声で海の仲間を集める。','星空の神殿'],
+['雷光のペガサス','monster',3,'🪽','雷のたてがみで空を駆ける。','炎の火山'],
+['古代文字の盾','weapon',3,'📜','古い文字が守りの力を生み出す。','星空の神殿'],
+['精霊のチャーム','weapon',3,'🔮','小さな精霊が宿るお守り。','はじまりの森'],
+['星渡りのブーツ','weapon',3,'🥾','星の道を歩くための不思議な靴。','星空の神殿']
+];
+const cards=original.map((x,i)=>({id:'c'+(i+1),name:x[0],type:x[1],rarity:x[2],emoji:x[3],desc:x[4],region:x[5],evolvesTo:null,hidden:false}));
+const hiddenCards=[
+{id:'h1',name:'ひみつのコメット',type:'monster',rarity:5,emoji:'☄️',desc:'7日連続で歩んだ人の前に現れる星の使い。',region:'星空の神殿',hidden:true,unlock:'streak7'},
+{id:'h2',name:'にじいろスライム',type:'monster',rarity:5,emoji:'🌈',desc:'スライムドラコを3枚集めると姿を見せる。',region:'はじまりの森',hidden:true,unlock:'slime3'},
+{id:'h3',name:'時の砂時計',type:'weapon',rarity:5,emoji:'⌛',desc:'スタンプを30日分集めた人への贈りもの。',region:'星空の神殿',hidden:true,unlock:'stamps30'},
+{id:'h4',name:'星の子ドラゴン',type:'monster',rarity:5,emoji:'🌟',desc:'図鑑を50種類発見すると出会える。',region:'星空の神殿',hidden:true,unlock:'kinds50'},
+{id:'h5',name:'伝説のスタンプ王冠',type:'weapon',rarity:5,emoji:'👑',desc:'図鑑を完成させた冒険者だけが手にできる。',region:'星空の神殿',hidden:true,unlock:'complete'}
+];
+const allCards=[...cards,...hiddenCards];
+const quotes=[
+['継続は力なり。毎日の一歩が、大きな強さになる！','（けいぞくは ちからなり）'],
+['一歩一歩が未来をつくる。きょうの努力はウソをつかない！','（いっぽいっぽが みらいをつくる）'],
+['塵も積もれば山となる。小さな力も集まれば大きな力！','（ちりもつもればやまとなる）'],
+['自分に勝つ者が、ほんとうのヒーローだ！','（じぶんにかつものが ほんとうのヒーロー）'],
+['毎日つづける君は、すでにかっこいい勇者だ！','（まいにちつづけるきみは ゆうしゃ）'],
+['今日の一歩が、明日の自分を強くする！','（きょうのいっぽが あしたのじぶんをつよくする）']
+];
+const defaultState={stamps:{},inventory:[],selectedStamp:'fire',evolved:[],achievements:[],unlockedRegions:['はじまりの森'],lastRewardDate:null,totalGacha:0};
+let state={...defaultState};let viewDate=new Date();let filter='all',rarityFilter='all',activeView='calendar',pendingReward=null;
+const $=id=>document.getElementById(id);
+function todayKey(d=new Date()){return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`}
+function dayDiff(a,b){return Math.round((new Date(a+'T12:00:00')-new Date(b+'T12:00:00'))/86400000)}
+function save(){localStorage.setItem('gongyo_app_state_v2',JSON.stringify(state));localStorage.setItem('gongyo_app_state',JSON.stringify(state));renderStats()}
+function load(){try{const raw=localStorage.getItem('gongyo_app_state_v2')||localStorage.getItem('gongyo_app_state');if(raw){const old=JSON.parse(raw);state={...defaultState,...old};if(!Array.isArray(state.inventory))state.inventory=[];if(!state.stamps)state.stamps={};}}catch(e){console.warn(e)}state.inventory=state.inventory.filter(id=>allCards.some(c=>c.id===id));}
+function count(id){return state.inventory.filter(x=>x===id).length}
+function owns(id){return count(id)>0}
+function ownedSet(){return new Set(state.inventory)}
+function uniqueCount(){return ownedSet().size}
+function totalStamps(){return Object.keys(state.stamps).length}
+function streak(){let n=0,d=new Date();if(!state.stamps[todayKey(d)])d.setDate(d.getDate()-1);while(state.stamps[todayKey(d)]){n++;d.setDate(d.getDate()-1)}return n}
+function currentRank(){const s=streak();return s>=30?'👑 勤行レジェンド':s>=14?'🏆 勤行マスター':s>=7?'🛡️ 勤行ナイト':s>=3?'⚔️ 勤行ハンター':'🌱 勤行ビギナー'}
+function renderStats(){$('streak').textContent=streak();$('rank').textContent=currentRank();$('ownedKinds').textContent=uniqueCount();$('ownedTotal').textContent='/'+allCards.length+' 種';$('completion').textContent=Math.floor(uniqueCount()/allCards.length*100)+'%';$('todayStatus').textContent=state.stamps[todayKey()]?'✅ 達成済！':'未達成';}
+function renderCalendar(){const y=viewDate.getFullYear(),m=viewDate.getMonth();$('monthTitle').textContent=`${y}年 ${m+1}月`;const start=new Date(y,m,1).getDay(),n=new Date(y,m+1,0).getDate(),today=todayKey();$('days').innerHTML='';for(let i=0;i<start;i++){const e=document.createElement('div');$('days').appendChild(e)}for(let d=1;d<=n;d++){const key=todayKey(new Date(y,m,d)),b=document.createElement('button'),future=key>today;b.className='day'+(key===today?' today':'')+(state.stamps[key]?' stamped':'')+(future?' future':'');b.innerHTML=`<span class="daynum">${d}</span><span class="stamp">${state.stamps[key]?stampEmoji(state.stamps[key]):(key===today?'＋':'')}</span>`;b.disabled=future||key!==today;b.title=state.stamps[key]?'達成済み':(key===today?'今日の勤行を記録':'');b.addEventListener('click',()=>stampToday());$('days').appendChild(b)}$('prev').disabled=false;$('next').disabled=(y===new Date().getFullYear()&&m===new Date().getMonth())}
+function stampEmoji(s){return {fire:'🔥',bolt:'⚡',dragon:'🐉',crown:'👑'}[s]||'✓'}
+function getUnlockedHidden(){const out=[];if(streak()>=7)out.push('h1');if(totalStamps()>=30)out.push('h3');if(uniqueCount()>=50)out.push('h4');if(uniqueCount()>=allCards.length-1)out.push('h5');return out}
+function availableCards(){const unlocked=getUnlockedHidden();return allCards.filter(c=>!c.hidden||unlocked.includes(c.id))}
+function roll(){let r=Math.random()*100,rarity=r<5?5:r<20?4:r<45?3:r<75?2:1;let pool=availableCards().filter(c=>c.rarity===rarity&&!c.hidden);if(!pool.length)pool=availableCards().filter(c=>c.rarity===rarity);if(!pool.length)pool=cards.filter(c=>c.rarity===1);return pool[Math.floor(Math.random()*pool.length)]}
+function checkHiddenUnlocks(){let unlocks=getUnlockedHidden().filter(id=>!owns(id));if(unlocks.length){const c=hiddenCards.find(x=>x.id===unlocks[0]);state.inventory.push(c.id);return c}return null}
+function stampToday(){const key=todayKey();if(state.stamps[key]){showModal({title:'きょうは達成済み！',emoji:'✅',name:'今日のスタンプは記録済み',desc:'今日のごほうびはもう受け取ったよ。明日も自分のペースで続けよう！',rarity:''});return}state.stamps[key]=state.selectedStamp;state.totalGacha=(state.totalGacha||0)+1;let card=roll();state.inventory.push(card.id);let extra='';let newly= !owns(card.id);if(!newly)extra=`このカードは ${count(card.id)} 枚目！ 同じカードは進化に使えるよ。`;else extra='新しいカードを発見！ 図鑑をチェックしよう。';const hidden=checkHiddenUnlocks();if(hidden)extra+=`\n🎉 ひみつのカード「${hidden.name}」も発見！`;save();renderCalendar();renderBook();renderGrow();renderAchievements();showModal({title:newly?'🎉 NEW DISCOVERY!':'🎁 コレクションゲット！',emoji:card.emoji,name:card.name,desc:card.desc,rarity:`★${card.rarity} ${rarityName(card.rarity)}・${card.type==='monster'?'モンスター':'そうび'}`,extra,quote:quotes[Math.floor(Math.random()*quotes.length)]});}
+function rarityName(r){return ['','NORMAL','RARE','HIGH RARE','ULTRA RARE','LEGEND'][r]}
+function showModal(o){$('modalTop').textContent=o.quote?o.quote[0]:'冒険の記録';$('modalTitle').textContent=o.title||'おめでとう！';$('modalEmoji').textContent=o.emoji||'✨';$('modalRarity').textContent=o.rarity||'';$('modalName').textContent=o.name||'';$('modalDesc').textContent=o.desc||'';$('modalExtra').textContent=o.extra||'';$('modalExtra').classList.toggle('hidden',!o.extra);$('modal').classList.remove('hidden')}
+function renderBook(){const grid=$('cardGrid');grid.innerHTML='';const unlocked=getUnlockedHidden();let list=allCards.filter(c=>{if(c.hidden&&!unlocked.includes(c.id)&&!owns(c.id))return false;if(filter==='monster'&&c.type!=='monster')return false;if(filter==='weapon'&&c.type!=='weapon')return false;if(filter==='owned'&&!owns(c.id))return false;if(filter==='missing'&&owns(c.id))return false;if(rarityFilter!=='all'&&String(c.rarity)!==rarityFilter)return false;return true});for(const c of list){const has=owns(c.id),n=count(c.id),el=document.createElement('article');el.className=`card r${c.rarity}${has?'':' locked'}`;el.innerHTML=has?`<span class="count">×${n}</span><div class="tag">★${c.rarity} ${c.hidden?'SECRET':''}</div><div class="emoji">${c.emoji}</div><div class="name">${c.name}</div><div class="desc">${c.desc}</div><div class="tag">${c.type==='monster'?'モンスター':'そうび'}</div>`:`<div class="tag">★${c.rarity}</div><div class="emoji">❔</div><div class="name">？？？？？</div><div class="desc">${c.hidden?'特別な条件で発見できる！':'勤行スタンプで発見しよう！'}</div>`;grid.appendChild(el)}$('bookProgress').textContent=`発見 ${uniqueCount()} / ${allCards.length} 種（カード合計 ${state.inventory.length} 枚）`;$('bookBar').style.width=(uniqueCount()/allCards.length*100)+'%'}
+const regions=[{name:'はじまりの森',emoji:'🌳',need:0,desc:'最初の冒険の場所。小さな仲間たちが待っている。'},{name:'炎の火山',emoji:'🌋',need:7,desc:'炎のモンスターや熱いそうびが見つかる。'},{name:'星空の神殿',emoji:'🌌',need:30,desc:'伝説のカードや、ひみつの仲間が眠る場所。'}];
+function renderGrow(){const list=$('regionList');list.innerHTML='';regions.forEach(r=>{const open=totalStamps()>=r.need;if(open&&!state.unlockedRegions.includes(r.name))state.unlockedRegions.push(r.name);const el=document.createElement('div');el.className='region'+(open?'':' locked');el.innerHTML=`<div class="emoji">${open?r.emoji:'🔒'}</div><div class="info"><b>${r.name}</b><p>${r.desc}</p><span class="muted">${open?'解放済み':`勤行スタンプ ${r.need} 日で解放`}</span></div><b>${open?'✓':'🔒'}</b>`;list.appendChild(el)});const ev=$('evolutionList');ev.innerHTML='';const evoRules=[{base:'c1',name:'スライムドラコ',need:3,to:'h2',desc:'にじいろスライムへの特別な変化'},{base:'c5',name:'ウインドウルフ',need:3,to:null,desc:'風の力が高まり、風の守り手へ'},{base:'c6',name:'ファイヤバード',need:3,to:null,desc:'炎の羽が輝き、炎の守り手へ'}];evoRules.forEach(rule=>{const n=count(rule.base),done=state.evolved.includes(rule.base),el=document.createElement('div');el.className='achievement'+(done?' done':'');el.innerHTML=`<div class="badge">${done?'✨':'🐣'}</div><div style="flex:1"><b>${rule.name} ${done?'（進化ずみ）':''}</b><p>${rule.desc} · 同じカード ${rule.need} 枚で進化</p><div class="progress"><div style="width:${Math.min(100,n/rule.need*100)}%"></div></div><p>${Math.min(n,rule.need)} / ${rule.need} 枚</p></div><button ${n<rule.need||done?'disabled':''} data-evolve="${rule.base}" class="${n>=rule.need&&!done?'primary':''}">${done?'完了':n>=rule.need?'進化！':'あと'+(rule.need-n)+'枚'}</button>`;ev.appendChild(el)});ev.querySelectorAll('[data-evolve]').forEach(b=>b.addEventListener('click',()=>evolve(b.dataset.evolve)))}
+function evolve(id){const rules={c1:{name:'にじいろスライム',emoji:'🌈',desc:'スライムドラコの進化形。色とりどりの光を放つ。',to:'h2'},c5:{name:'テンペストウルフ',emoji:'🌪️',desc:'風の力をきわめたウインドウルフの進化形。'},c6:{name:'フレアフェニックス',emoji:'🔥',desc:'炎の羽が輝くファイヤバードの進化形。'}};const r=rules[id];if(!r||count(id)<3||state.evolved.includes(id))return;state.evolved.push(id);state.inventory.splice(state.inventory.indexOf(id),1);state.inventory.splice(state.inventory.indexOf(id),1);if(r.to){if(!owns(r.to))state.inventory.push(r.to)}else{state.inventory.push(id)}save();renderBook();renderGrow();renderAchievements();showModal({title:'✨ 進化成功！',emoji:r.emoji,name:r.name,desc:r.desc,rarity:'進化した仲間',extra:'進化前の姿も、図鑑の記録に残るよ。'})}
+const achievementDefs=[
+{id:'first',name:'冒険のはじまり',emoji:'🌟',desc:'はじめてカードを手に入れる',test:()=>state.inventory.length>=1},
+{id:'stamp3',name:'三日坊主をこえた！',emoji:'🔥',desc:'勤行スタンプを3日分集める',test:()=>totalStamps()>=3},
+{id:'stamp7',name:'一週間の勇者',emoji:'🛡️',desc:'勤行スタンプを7日分集める',test:()=>totalStamps()>=7},
+{id:'stamp30',name:'継続の達人',emoji:'👑',desc:'勤行スタンプを30日分集める',test:()=>totalStamps()>=30},
+{id:'kind10',name:'見習いコレクター',emoji:'📚',desc:'10種類のカードを発見する',test:()=>uniqueCount()>=10},
+{id:'kind30',name:'図鑑ハンター',emoji:'🔎',desc:'30種類のカードを発見する',test:()=>uniqueCount()>=30},
+{id:'kind50',name:'伝説の探究者',emoji:'🌌',desc:'50種類のカードを発見する',test:()=>uniqueCount()>=50},
+{id:'kind75',name:'コレクションマスター',emoji:'💎',desc:'75種類のカードを発見する',test:()=>uniqueCount()>=75},
+{id:'complete',name:'図鑑コンプリート！',emoji:'🏆',desc:'すべてのカードを発見する',test:()=>uniqueCount()>=allCards.length},
+{id:'rarity5',name:'伝説との出会い',emoji:'✨',desc:'★5カードを手に入れる',test:()=>state.inventory.some(id=>allCards.some(c=>c.id===id&&c.rarity===5))}
+];
+function renderAchievements(){const list=$('achievementList');list.innerHTML='';achievementDefs.forEach(a=>{const done=a.test();if(done&&!state.achievements.includes(a.id))state.achievements.push(a.id);const el=document.createElement('div');el.className='achievement'+(done?' done':'');el.innerHTML=`<div class="badge">${a.emoji}</div><div><b>${a.name}</b><p>${a.desc}</p></div><div class="status">${done?'達成！':'未達成'}</div>`;list.appendChild(el)});const next=totalStamps()<7?`次の目標：スタンプ ${7-totalStamps()} 日で「炎の火山」が解放！`:totalStamps()<30?`次の目標：スタンプ ${30-totalStamps()} 日で「星空の神殿」が解放！`:uniqueCount()<allCards.length?`次の目標：図鑑をもっと埋めよう！あと ${allCards.length-uniqueCount()} 種！`:'🎉 図鑑コンプリート！すごい！';$('nextGoal').textContent=next;save()}
+function switchView(name){activeView=name;['calendar','book','grow','achieve'].forEach(v=>$('view-'+v).classList.toggle('hidden',v!==name));document.querySelectorAll('[data-view]').forEach(b=>b.classList.toggle('active',b.dataset.view===name));if(name==='book')renderBook();if(name==='grow')renderGrow();if(name==='achieve')renderAchievements()}
+document.querySelectorAll('[data-view]').forEach(b=>b.addEventListener('click',()=>switchView(b.dataset.view)));
+document.querySelectorAll('.stamp-btn').forEach(b=>b.addEventListener('click',()=>{state.selectedStamp=b.dataset.stamp;document.querySelectorAll('.stamp-btn').forEach(x=>x.classList.toggle('active',x===b));save()}));
+document.querySelectorAll('[data-filter]').forEach(b=>b.addEventListener('click',()=>{filter=b.dataset.filter;document.querySelectorAll('[data-filter]').forEach(x=>x.classList.toggle('active',x===b));renderBook()}));
+document.querySelectorAll('[data-rarity]').forEach(b=>b.addEventListener('click',()=>{rarityFilter=b.dataset.rarity;document.querySelectorAll('[data-rarity]').forEach(x=>x.classList.toggle('active',x===b));renderBook()}));
+$('stampToday').addEventListener('click',stampToday);$('prev').addEventListener('click',()=>{viewDate.setMonth(viewDate.getMonth()-1);renderCalendar()});$('next').addEventListener('click',()=>{viewDate.setMonth(viewDate.getMonth()+1);renderCalendar()});$('modalClose').addEventListener('click',()=>$('modal').classList.add('hidden'));$('modal').addEventListener('click',e=>{if(e.target===$('modal'))$('modal').classList.add('hidden')});
+$('exportData').addEventListener('click',()=>{const blob=new Blob([JSON.stringify({version:2,exportedAt:new Date().toISOString(),state},null,2)],{type:'application/json'});const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='gongyo-monsters-backup.json';a.click();URL.revokeObjectURL(a.href)});
+$('importData').addEventListener('change',async e=>{const f=e.target.files[0];if(!f)return;try{const obj=JSON.parse(await f.text());const incoming=obj.state||obj;if(!incoming.stamps||!Array.isArray(incoming.inventory))throw new Error('format');if(!confirm('今のデータを、バックアップの内容で置きかえますか？'))return;state={...defaultState,...incoming};save();renderAll();alert('バックアップを読み込みました。')}catch(err){alert('読み込めませんでした。正しいバックアップファイルか確認してください。')}e.target.value=''});
+$('resetData').addEventListener('click',()=>{if(!confirm('本当にデータをリセットしますか？ スタンプ・カード・実績が消えます。先にバックアップを取ることをおすすめします。'))return;if(!confirm('もう一度確認です。データを消して最初から始めますか？'))return;state={...defaultState,stamps:{},inventory:[],achievements:[],evolved:[],unlockedRegions:['はじまりの森']};save();renderAll();switchView('calendar')});
+function renderAll(){renderStats();renderCalendar();renderBook();renderGrow();renderAchievements()}
+load();renderAll();
+</script>
+</body>
+</html>
