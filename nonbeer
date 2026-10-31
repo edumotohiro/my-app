@@ -1,0 +1,556 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>超・休肝日達成トラッカー！</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- FontAwesome & Google Fonts -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=M+PLUS+Rounded+1c:wght@400;700;900&display=swap" rel="stylesheet">
+    <!-- JS Canvas Confetti -->
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['"M PLUS Rounded 1c"', 'sans-serif'],
+                    },
+                    colors: {
+                        brand: {
+                            yellow: '#FFB800',
+                            orange: '#FF5722',
+                            green: '#10B981',
+                            purple: '#8B5CF6'
+                        }
+                    },
+                    animation: {
+                        'bounce-slow': 'bounce 2s infinite',
+                        'pulse-fast': 'pulse 1s infinite',
+                        'wiggle': 'wiggle 0.5s ease-in-out infinite',
+                    },
+                    keyframes: {
+                        wiggle: {
+                            '0%, 100%': { transform: 'rotate(-3deg)' },
+                            '50%': { transform: 'rotate(3deg)' },
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        body {
+            font-family: 'M PLUS Rounded 1c', sans-serif;
+            transition: background-color 0.3s, color 0.3s;
+        }
+        .btn-stamp {
+            box-shadow: 0 10px 0 #c2410c, 0 15px 20px rgba(0,0,0,0.3);
+            transition: all 0.1s ease;
+        }
+        .btn-stamp:active {
+            box-shadow: 0 2px 0 #c2410c, 0 5px 10px rgba(0,0,0,0.3);
+            transform: translateY(8px);
+        }
+        .glow-effect {
+            box-shadow: 0 0 25px rgba(255, 184, 0, 0.6);
+        }
+    </style>
+</head>
+<body class="bg-amber-50 text-slate-800 dark:bg-slate-900 dark:text-slate-100 min-h-screen flex flex-col justify-between selection:bg-amber-300">
+
+    <!-- Header Navigation -->
+    <header class="w-full max-w-md mx-auto p-4 flex justify-between items-center">
+        <div class="flex items-center gap-2">
+            <span class="text-3xl animate-bounce">🔥</span>
+            <h1 class="text-xl font-black tracking-wider bg-gradient-to-r from-amber-500 via-orange-500 to-red-500 bg-clip-text text-transparent">
+                休肝日マスター！
+            </h1>
+        </div>
+        <div class="flex items-center gap-2">
+            <button id="soundToggleBtn" onclick="toggleSound()" class="p-2.5 rounded-full bg-amber-200 dark:bg-slate-800 text-amber-800 dark:text-amber-400 font-bold hover:scale-110 transition">
+                <i id="soundIcon" class="fas fa-volume-up text-lg"></i>
+            </button>
+            <button id="themeToggleBtn" onclick="toggleTheme()" class="p-2.5 rounded-full bg-amber-200 dark:bg-slate-800 text-amber-800 dark:text-amber-400 font-bold hover:scale-110 transition">
+                <i id="themeIcon" class="fas fa-moon text-lg"></i>
+            </button>
+        </div>
+    </header>
+
+    <!-- Main Container -->
+    <main class="w-full max-w-md mx-auto px-4 flex-1 flex flex-col gap-5 pb-10">
+
+        <!-- Banner Cheering Message -->
+        <div id="quoteCard" class="bg-gradient-to-r from-orange-400 to-amber-500 text-white p-4 rounded-2xl shadow-lg border-2 border-amber-300 transform transition-all duration-300 hover:scale-[1.02]">
+            <div class="flex items-start gap-3">
+                <i class="fas fa-bullhorn text-2xl mt-1 text-yellow-200 animate-wiggle"></i>
+                <div>
+                    <span class="text-xs font-black uppercase tracking-widest text-amber-100">今日のハイテンション名言</span>
+                    <p id="motivationalQuote" class="font-bold text-base mt-0.5 leading-snug">今日も肝臓を愛そう！きみの決断は素晴らしい！</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Main Counter Hero Display -->
+        <div class="bg-white dark:bg-slate-800 rounded-3xl p-6 shadow-xl border-4 border-amber-400 dark:border-amber-600 relative overflow-hidden text-center glow-effect">
+            <div class="absolute -top-10 -right-10 w-32 h-32 bg-amber-300/30 dark:bg-amber-600/20 rounded-full blur-xl pointer-events-none"></div>
+            
+            <span class="inline-block bg-amber-100 dark:bg-slate-700 text-amber-800 dark:text-amber-300 px-4 py-1 rounded-full text-xs font-black tracking-widest uppercase mb-2">
+                現在の連続ノンアル達成
+            </span>
+
+            <div class="flex justify-center items-baseline gap-1 my-2">
+                <span id="currentStreak" class="text-7xl font-black text-transparent bg-clip-text bg-gradient-to-b from-amber-500 to-orange-600 drop-shadow-sm">0</span>
+                <span class="text-2xl font-bold text-amber-600 dark:text-amber-400">日連続！</span>
+            </div>
+
+            <div class="flex justify-around items-center mt-4 pt-4 border-t border-slate-100 dark:border-slate-700 text-sm">
+                <div>
+                    <span class="text-xs text-slate-400 block font-bold">通算達成日数</span>
+                    <span id="totalDays" class="text-xl font-black text-slate-700 dark:text-slate-200">0</span> 日
+                </div>
+                <div class="h-8 w-px bg-slate-200 dark:bg-slate-700"></div>
+                <div>
+                    <span class="text-xs text-slate-400 block font-bold">最高記録</span>
+                    <span id="maxStreak" class="text-xl font-black text-emerald-500">0</span> 日
+                </div>
+            </div>
+        </div>
+
+        <!-- BIG Celebration Button -->
+        <div class="my-2">
+            <button id="stampBtn" onclick="recordNoDrink()" class="btn-stamp w-full bg-gradient-to-r from-orange-500 via-amber-500 to-yellow-500 hover:from-orange-600 hover:to-yellow-600 text-white font-black text-2xl py-6 rounded-3xl flex flex-col items-center justify-center gap-1 cursor-pointer">
+                <div class="flex items-center gap-3">
+                    <i id="stampIcon" class="fas fa-beer-slash text-3xl"></i>
+                    <span id="stampBtnText">今日も飲まなかった！</span>
+                </div>
+                <span id="stampSubText" class="text-xs font-semibold text-amber-100 opacity-90">（タップして豪快に記録！）</span>
+            </button>
+        </div>
+
+        <!-- Health & Financial Impact Stats -->
+        <div class="grid grid-cols-2 gap-3">
+            <!-- Money Saved -->
+            <div class="bg-emerald-500 text-white p-4 rounded-2xl shadow-lg relative overflow-hidden">
+                <i class="fas fa-piggy-bank text-emerald-300 text-5xl absolute -bottom-2 -right-2 opacity-40"></i>
+                <span class="text-xs font-bold text-emerald-100 block">浮いたお酒代（推定）</span>
+                <div class="mt-1 flex items-baseline gap-1">
+                    <span class="text-xs font-bold">¥</span>
+                    <span id="savedMoney" class="text-2xl font-black tracking-tight">0</span>
+                </div>
+                <span class="text-[10px] text-emerald-100 block mt-1">※500円/日換算</span>
+            </div>
+
+            <!-- Calories Avoided / Health -->
+            <div class="bg-purple-600 text-white p-4 rounded-2xl shadow-lg relative overflow-hidden">
+                <i class="fas fa-heartpulse text-purple-300 text-5xl absolute -bottom-2 -right-2 opacity-40"></i>
+                <span class="text-xs font-bold text-purple-100 block">カットしたカロリー</span>
+                <div class="mt-1 flex items-baseline gap-1">
+                    <span id="savedCalories" class="text-2xl font-black tracking-tight">0</span>
+                    <span class="text-xs font-bold">kcal</span>
+                </div>
+                <span class="text-[10px] text-purple-100 block mt-1">※約300kcal/日分！</span>
+            </div>
+        </div>
+
+        <!-- Trophy Badges Progress -->
+        <div class="bg-white dark:bg-slate-800 p-5 rounded-3xl shadow-md border border-slate-200 dark:border-slate-700">
+            <h3 class="text-sm font-black text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-3 flex items-center gap-2">
+                <i class="fas fa-trophy text-amber-500"></i> 達成マイルストーンバッジ
+            </h3>
+            <div class="grid grid-cols-4 gap-2 text-center" id="badgesContainer">
+                <!-- Dynamic Badges Inserted Here -->
+            </div>
+        </div>
+
+        <!-- Calendar / Activity Log -->
+        <div class="bg-white dark:bg-slate-800 p-5 rounded-3xl shadow-md border border-slate-200 dark:border-slate-700">
+            <div class="flex justify-between items-center mb-3">
+                <h3 class="text-sm font-black text-slate-500 dark:text-slate-400 uppercase tracking-wider flex items-center gap-2">
+                    <i class="fas fa-calendar-alt text-amber-500"></i> 今月の達成カレンダー
+                </h3>
+                <span id="calendarMonth" class="text-xs font-bold text-slate-400"></span>
+            </div>
+            <div class="grid grid-cols-7 gap-1 text-center font-bold text-xs text-slate-400 mb-2">
+                <div>日</div><div>月</div><div>火</div><div>水</div><div>木</div><div>金</div><div>土</div>
+            </div>
+            <div id="calendarGrid" class="grid grid-cols-7 gap-1.5">
+                <!-- Dynamic Calendar Days -->
+            </div>
+        </div>
+
+        <!-- Settings Modal / Reset Trigger -->
+        <div class="text-center mt-2">
+            <button onclick="resetTodayStatus()" class="text-xs font-bold text-slate-400 hover:text-red-500 underline transition">
+                本日の記録を取り消す / 修正する
+            </button>
+        </div>
+
+    </main>
+
+    <footer class="text-center py-4 text-xs font-bold text-slate-400">
+        今日も自分をたくさん褒めよう！✨
+    </footer>
+
+    <!-- Audio Web API & Application Script -->
+    <script>
+        // High-tension motivational quotes
+        const QUOTES = [
+            "今日も肝臓を休ませるあなたは最高にクール！✨",
+            "お酒を飲まない＝無敵の睡眠時間を手に入れるということ！明日の朝が楽しみ！🚀",
+            "肝臓『ありがとう…本当にありがとう…！』🙌",
+            "ノンアルで冴え渡る脳細胞！今日の君はいつも以上にキレキレだ！🧠💥",
+            "浮いたお金で何食べる？自分へのご褒美を準備しよう！🥩✨",
+            "継続は力なり！1日の積み重ねが伝説を作る！🔥",
+            "健康意識最高峰！素らふ（シラフ）の楽しさを極めようぜ！🎉",
+            "飲まなかった自分を今すぐ大声で褒めちぎろう！！👏🌟"
+        ];
+
+        // Milestones
+        const MILESTONES = [
+            { days: 3, label: '3日達成', icon: 'fa-seedling', color: 'text-emerald-500' },
+            { days: 7, label: '1週間', icon: 'fa-fire', color: 'text-amber-500' },
+            { days: 14, label: '2週間', icon: 'fa-bolt', color: 'text-blue-500' },
+            { days: 30, label: '1ヶ月', icon: 'fa-crown', color: 'text-purple-500' },
+            { days: 60, label: '2ヶ月', icon: 'fa-gem', color: 'text-indigo-500' },
+            { days: 90, label: '3ヶ月', icon: 'fa-medal', color: 'text-rose-500' },
+            { days: 100, label: '100日達成', icon: 'fa-trophy', color: 'text-yellow-400' },
+            { days: 365, label: '1年達成', icon: 'fa-rocket', color: 'text-orange-500' }
+        ];
+
+        // App State
+        let state = {
+            logs: {}, // Format: { "YYYY-MM-DD": true }
+            soundEnabled: true,
+            darkMode: false
+        };
+
+        // Initialize Audio Context
+        const AudioContext = window.AudioContext || window.webkitAudioContext;
+        let audioCtx = null;
+
+        function initAudio() {
+            if (!audioCtx) {
+                audioCtx = new AudioContext();
+            }
+        }
+
+        // Play fan-fare sound via Web Audio API
+        function playVictorySound() {
+            if (!state.soundEnabled) return;
+            initAudio();
+
+            const now = audioCtx.currentTime;
+
+            // Arpeggio notes (C5, E5, G5, C6)
+            const notes = [523.25, 659.25, 783.99, 1046.50];
+            notes.forEach((freq, i) => {
+                const osc = audioCtx.createOscillator();
+                const gain = audioCtx.createGain();
+                
+                osc.type = 'triangle';
+                osc.frequency.setValueAtTime(freq, now + i * 0.08);
+
+                gain.gain.setValueAtTime(0.3, now + i * 0.08);
+                gain.gain.exponentialRampToValueAtTime(0.001, now + i * 0.08 + 0.3);
+
+                osc.connect(gain);
+                gain.connect(audioCtx.destination);
+
+                osc.start(now + i * 0.08);
+                osc.stop(now + i * 0.08 + 0.3);
+            });
+        }
+
+        // Play subtle click sound
+        function playClickSound() {
+            if (!state.soundEnabled) return;
+            initAudio();
+            const osc = audioCtx.createOscillator();
+            const gain = audioCtx.createGain();
+            osc.type = 'sine';
+            osc.frequency.setValueAtTime(400, audioCtx.currentTime);
+            gain.gain.setValueAtTime(0.1, audioCtx.currentTime);
+            gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.05);
+            osc.connect(gain);
+            gain.connect(audioCtx.destination);
+            osc.start();
+            osc.stop(audioCtx.currentTime + 0.05);
+        }
+
+        // Helper: Format Date to YYYY-MM-DD
+        function formatDate(d) {
+            const year = d.getFullYear();
+            const month = String(d.getMonth() + 1).padStart(2, '0');
+            const day = String(d.getDate()).padStart(2, '0');
+            return `${year}-${month}-${day}`;
+        }
+
+        // Load data from LocalStorage
+        function loadData() {
+            const saved = localStorage.getItem('nodrink_app_data');
+            if (saved) {
+                try {
+                    state = JSON.parse(saved);
+                } catch (e) {
+                    console.error("Failed to load data", e);
+                }
+            }
+
+            // Apply Theme
+            if (state.darkMode) {
+                document.documentElement.classList.add('dark');
+                document.getElementById('themeIcon').className = 'fas fa-sun text-yellow-400 text-lg';
+            } else {
+                document.documentElement.classList.remove('dark');
+                document.getElementById('themeIcon').className = 'fas fa-moon text-lg';
+            }
+
+            // Sound Icon
+            updateSoundIcon();
+
+            // Set random daily quote based on date hash
+            const todayStr = formatDate(new Date());
+            let hash = 0;
+            for (let i = 0; i < todayStr.length; i++) hash += todayStr.charCodeAt(i);
+            document.getElementById('motivationalQuote').innerText = QUOTES[hash % QUOTES.length];
+
+            render();
+        }
+
+        // Save data to LocalStorage
+        function saveData() {
+            localStorage.setItem('nodrink_app_data', JSON.stringify(state));
+            render();
+        }
+
+        // Toggle Sound Settings
+        function toggleSound() {
+            state.soundEnabled = !state.soundEnabled;
+            updateSoundIcon();
+            saveData();
+        }
+
+        function updateSoundIcon() {
+            const soundBtn = document.getElementById('soundIcon');
+            if (state.soundEnabled) {
+                soundBtn.className = 'fas fa-volume-up text-lg';
+            } else {
+                soundBtn.className = 'fas fa-volume-mute text-lg text-slate-400';
+            }
+        }
+
+        // Toggle Dark Mode
+        function toggleTheme() {
+            state.darkMode = !state.darkMode;
+            if (state.darkMode) {
+                document.documentElement.classList.add('dark');
+                document.getElementById('themeIcon').className = 'fas fa-sun text-yellow-400 text-lg';
+            } else {
+                document.documentElement.classList.remove('dark');
+                document.getElementById('themeIcon').className = 'fas fa-moon text-lg';
+            }
+            saveData();
+        }
+
+        // Main Stamp Action: "Today I Didn't Drink!"
+        function recordNoDrink() {
+            const today = formatDate(new Date());
+
+            if (!state.logs[today]) {
+                state.logs[today] = true;
+                saveData();
+
+                // Trigger Confetti Explosion
+                confetti({
+                    particleCount: 120,
+                    spread: 80,
+                    origin: { y: 0.6 },
+                    colors: ['#FFB800', '#FF5722', '#10B981', '#8B5CF6', '#EC4899']
+                });
+
+                // Play Victory Sound
+                playVictorySound();
+            } else {
+                playClickSound();
+            }
+        }
+
+        // Cancel today's stamp if pressed by mistake
+        function resetTodayStatus() {
+            const today = formatDate(new Date());
+            if (state.logs[today]) {
+                delete state.logs[today];
+                saveData();
+            }
+        }
+
+        // Calculate Streaks and Statistics
+        function calculateStats() {
+            const dates = Object.keys(state.logs).sort();
+            const totalDays = dates.length;
+
+            if (totalDays === 0) {
+                return { currentStreak: 0, maxStreak: 0, totalDays: 0 };
+            }
+
+            // Calculate Current Streak
+            let currentStreak = 0;
+            let checkDate = new Date();
+            
+            // Check if today is logged
+            let todayStr = formatDate(checkDate);
+            if (!state.logs[todayStr]) {
+                // Check if yesterday was logged to maintain streak continuity
+                checkDate.setDate(checkDate.getDate() - 1);
+                todayStr = formatDate(checkDate);
+            }
+
+            while (state.logs[todayStr]) {
+                currentStreak++;
+                checkDate.setDate(checkDate.getDate() - 1);
+                todayStr = formatDate(checkDate);
+            }
+
+            // Calculate Max Streak
+            let maxStreak = 0;
+            let tempStreak = 0;
+            
+            // Loop through all dates in range
+            const firstDate = new Date(dates[0]);
+            const lastDate = new Date();
+            let curr = new Date(firstDate);
+
+            while (curr <= lastDate) {
+                const str = formatDate(curr);
+                if (state.logs[str]) {
+                    tempStreak++;
+                    if (tempStreak > maxStreak) maxStreak = tempStreak;
+                } else {
+                    tempStreak = 0;
+                }
+                curr.setDate(curr.getDate() + 1);
+            }
+
+            return { currentStreak, maxStreak, totalDays };
+        }
+
+        // Render UI Components
+        function render() {
+            const todayStr = formatDate(new Date());
+            const isTodayDone = !!state.logs[todayStr];
+            const stats = calculateStats();
+
+            // Update Counters
+            document.getElementById('currentStreak').innerText = stats.currentStreak;
+            document.getElementById('totalDays').innerText = stats.totalDays;
+            document.getElementById('maxStreak').innerText = stats.maxStreak;
+
+            // Savings (500 JPY / 300 kcal per day)
+            document.getElementById('savedMoney').innerText = (stats.totalDays * 500).toLocaleString();
+            document.getElementById('savedCalories').innerText = (stats.totalDays * 300).toLocaleString();
+
+            // Update Main Stamp Button State
+            const stampBtn = document.getElementById('stampBtn');
+            const stampBtnText = document.getElementById('stampBtnText');
+            const stampSubText = document.getElementById('stampSubText');
+            const stampIcon = document.getElementById('stampIcon');
+
+            if (isTodayDone) {
+                stampBtn.className = "btn-stamp w-full bg-gradient-to-r from-emerald-500 to-teal-600 text-white font-black text-2xl py-6 rounded-3xl flex flex-col items-center justify-center gap-1 cursor-default opacity-95";
+                stampBtnText.innerText = "本日達成完了！🎉";
+                stampSubText.innerText = "（素晴らしい！今日はお体を労わりました）";
+                stampIcon.className = "fas fa-check-circle text-3xl animate-bounce";
+            } else {
+                stampBtn.className = "btn-stamp w-full bg-gradient-to-r from-orange-500 via-amber-500 to-yellow-500 hover:from-orange-600 hover:to-yellow-600 text-white font-black text-2xl py-6 rounded-3xl flex flex-col items-center justify-center gap-1 cursor-pointer transform active:scale-95 transition";
+                stampBtnText.innerText = "今日も飲まなかった！";
+                stampSubText.innerText = "（タップして豪快に記録！）";
+                stampIcon.className = "fas fa-beer-slash text-3xl animate-pulse";
+            }
+
+            renderBadges(stats.currentStreak);
+            renderCalendar();
+        }
+
+        // Render Achievement Badges
+        function renderBadges(currentStreak) {
+            const container = document.getElementById('badgesContainer');
+            container.innerHTML = '';
+
+            MILESTONES.forEach(m => {
+                const isUnlocked = currentStreak >= m.days;
+                const badge = document.createElement('div');
+                badge.className = `p-2 rounded-2xl flex flex-col items-center justify-center border transition-all ${
+                    isUnlocked 
+                        ? 'bg-amber-50 dark:bg-slate-700/80 border-amber-300 dark:border-amber-500 shadow-sm' 
+                        : 'bg-slate-50 dark:bg-slate-800/40 border-slate-200 dark:border-slate-700 opacity-40 grayscale'
+                }`;
+
+                badge.innerHTML = `
+                    <div class="w-10 h-10 rounded-full flex items-center justify-center text-lg mb-1 ${isUnlocked ? m.color : 'text-slate-400'}">
+                        <i class="fas ${m.icon}"></i>
+                    </div>
+                    <span class="text-[10px] font-black text-slate-700 dark:text-slate-300">${m.label}</span>
+                `;
+                container.appendChild(badge);
+            });
+        }
+
+        // Render Monthly Calendar View
+        function renderCalendar() {
+            const grid = document.getElementById('calendarGrid');
+            grid.innerHTML = '';
+
+            const now = new Date();
+            const year = now.getFullYear();
+            const month = now.getMonth();
+
+            document.getElementById('calendarMonth').innerText = `${year}年 ${month + 1}月`;
+
+            const firstDay = new Date(year, month, 1).getDay();
+            const daysInMonth = new Date(year, month + 1, 0).getDate();
+
+            // Blank days before month start
+            for (let i = 0; i < firstDay; i++) {
+                const empty = document.createElement('div');
+                grid.appendChild(empty);
+            }
+
+            // Month Days
+            const todayStr = formatDate(now);
+
+            for (let day = 1; day <= daysInMonth; day++) {
+                const dateObj = new Date(year, month, day);
+                const dateStr = formatDate(dateObj);
+                const isDone = !!state.logs[dateStr];
+                const isToday = dateStr === todayStr;
+
+                const dayEl = document.createElement('div');
+                dayEl.className = `h-9 rounded-xl flex items-center justify-center text-xs font-bold relative transition ${
+                    isDone 
+                        ? 'bg-amber-400 text-white shadow-sm font-black' 
+                        : 'bg-slate-100 dark:bg-slate-700/50 text-slate-600 dark:text-slate-400'
+                } ${isToday ? 'ring-2 ring-orange-500' : ''}`;
+
+                dayEl.innerText = day;
+
+                if (isDone) {
+                    const icon = document.createElement('i');
+                    icon.className = 'fas fa-star text-[9px] absolute top-1 right-1 text-yellow-100';
+                    dayEl.appendChild(icon);
+                }
+
+                grid.appendChild(dayEl);
+            }
+        }
+
+        // App Initialization
+        window.onload = function() {
+            loadData();
+        };
+    </script>
+</body>
+</html>
