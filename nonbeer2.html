@@ -79,14 +79,19 @@
       </div>
 
       <!-- アクションボタン -->
-      <div class="mt-6 flex flex-col gap-3">
+      <div class="mt-6 flex flex-col gap-2">
         <button id="btn-success" onclick="recordNoDrink()" class="w-full py-4 bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-400 hover:to-orange-400 active:scale-95 transition text-slate-950 font-black text-lg rounded-2xl shadow-lg shadow-amber-500/20 flex items-center justify-center gap-2">
           <span>✨ 今日もお酒を飲まなかった！</span>
         </button>
 
-        <button id="btn-reset" onclick="confirmReset()" class="text-xs text-slate-500 hover:text-slate-400 py-1">
-          飲んでしまった（連続カウントをリセット）
-        </button>
+        <div class="flex justify-between items-center px-1 mt-1">
+          <button onclick="undoTodayRecord()" class="text-xs text-amber-400/80 hover:text-amber-300 py-1 flex items-center gap-1">
+            <span>↩️</span> 今日の記録を取り消す
+          </button>
+          <button onclick="confirmReset()" class="text-xs text-slate-500 hover:text-slate-400 py-1">
+            飲んでしまった（連続リセット）
+          </button>
+        </div>
       </div>
 
       <!-- ランダム応援セリフ -->
@@ -118,13 +123,14 @@
 
     <!-- 今月のスタンプカード -->
     <div class="bg-slate-800/60 border border-slate-700/50 rounded-2xl p-4">
-      <div class="flex justify-between items-center mb-3">
+      <div class="flex justify-between items-center mb-1">
         <div class="flex items-center gap-2">
           <span class="text-lg">💮</span>
           <h2 class="font-bold text-sm text-slate-200">今月の達成スタンプ</h2>
         </div>
         <span id="current-month-text" class="text-xs font-bold text-slate-400"></span>
       </div>
+      <p class="text-[10px] text-slate-400 mb-3">※押し忘れた日をタップすると後からスタンプを押せます！</p>
       <div id="stamp-grid" class="grid grid-cols-7 gap-1.5 text-center">
         <!-- JSで生成 -->
       </div>
@@ -160,9 +166,8 @@
   </main>
 
   <script>
-    // --- 設定値 ---
-    const MONEY_PER_DAY = 500; // 1日あたりの平均お酒代（円）
-    const CAL_PER_DAY = 300;   // 1日あたりの平均カロリー（kcal）
+    const MONEY_PER_DAY = 500;
+    const CAL_PER_DAY = 300;
 
     const CHEER_MESSAGES = [
       "肝臓がスタンディングオベーションしてるぞ！",
@@ -195,7 +200,6 @@
       { id: 'b8', name: '超人類', desc: '通算100日達成', reqType: 'total', reqVal: 100, icon: '🚀' }
     ];
 
-    // --- アプリの状態 ---
     let state = {
       streak: 0,
       total: 0,
@@ -203,7 +207,6 @@
       historyDates: []
     };
 
-    // --- 初期起動処理 ---
     window.onload = function() {
       try {
         generateAppIcon();
@@ -216,7 +219,6 @@
       }
     };
 
-    // --- アイコン自動生成 ---
     function generateAppIcon() {
       try {
         const canvas = document.createElement('canvas');
@@ -245,20 +247,13 @@
         const dataUrl = canvas.toDataURL('image/png');
         document.getElementById('dynamic-apple-icon').href = dataUrl;
         document.getElementById('dynamic-favicon').href = dataUrl;
-      } catch (e) {
-        console.log("アイコン生成スキップ");
-      }
+      } catch (e) {}
     }
 
-    // --- ストレージ読み書き ---
     function loadState() {
       const saved = localStorage.getItem('no_alcohol_tracker_state');
       if (saved) {
-        try {
-          state = JSON.parse(saved);
-        } catch(e) {
-          console.error("データ復元エラー", e);
-        }
+        try { state = JSON.parse(saved); } catch(e) {}
       }
     }
 
@@ -274,11 +269,11 @@
       return `${y}-${m}-${d}`;
     }
 
-    // --- アクション ---
+    // --- 今日の記録 ---
     function recordNoDrink() {
       const today = getTodayString();
 
-      if (state.lastRecordedDate === today) {
+      if (state.lastRecordedDate === today || state.historyDates.includes(today)) {
         alert("今日はすでに記録済みです！明日もこの調子で頑張りましょう🔥");
         return;
       }
@@ -286,26 +281,73 @@
       state.streak += 1;
       state.total += 1;
       state.lastRecordedDate = today;
-      if (!state.historyDates.includes(today)) {
-        state.historyDates.push(today);
-      }
+      state.historyDates.push(today);
 
       saveState();
       updateUI();
       renderStamps();
       renderBadges();
 
-      // 紙吹雪
       if (typeof confetti === 'function') {
-        confetti({
-          particleCount: 100,
-          spread: 70,
-          origin: { y: 0.6 }
-        });
+        confetti({ particleCount: 100, spread: 70, origin: { y: 0.6 } });
       }
 
       const randomMsg = CHEER_MESSAGES[Math.floor(Math.random() * CHEER_MESSAGES.length)];
       document.getElementById('cheer-message').innerText = `「${randomMsg}」`;
+    }
+
+    // --- 今日の記録の取り消し ---
+    function undoTodayRecord() {
+      const today = getTodayString();
+      if (!state.historyDates.includes(today)) {
+        alert("今日の記録はまだありません。");
+        return;
+      }
+
+      if (confirm("今日の記録を取り消しますか？\n（連続・通算カウントが1日減ります）")) {
+        state.historyDates = state.historyDates.filter(d => d !== today);
+        if (state.streak > 0) state.streak -= 1;
+        if (state.total > 0) state.total -= 1;
+        state.lastRecordedDate = state.historyDates[state.historyDates.length - 1] || null;
+
+        saveState();
+        updateUI();
+        renderStamps();
+        renderBadges();
+        alert("今日の記録を取り消しました！");
+      }
+    }
+
+    // --- 過去の日付（押し忘れた日）をタップして追加/削除 ---
+    function togglePastDate(dateStr, dayNum) {
+      const today = getTodayString();
+      if (dateStr > today) {
+        alert("未来の日付は記録できません。");
+        return;
+      }
+
+      const isRecorded = state.historyDates.includes(dateStr);
+
+      if (!isRecorded) {
+        if (confirm(`${month + 1}月${dayNum}日の記録を追加しますか？`)) {
+          state.historyDates.push(dateStr);
+          state.total += 1;
+          saveState();
+          updateUI();
+          renderStamps();
+          renderBadges();
+        }
+      } else {
+        if (confirm(`${month + 1}月${dayNum}日の記録を取り消しますか？`)) {
+          state.historyDates = state.historyDates.filter(d => d !== dateStr);
+          if (state.total > 0) state.total -= 1;
+          if (dateStr === today && state.streak > 0) state.streak -= 1;
+          saveState();
+          updateUI();
+          renderStamps();
+          renderBadges();
+        }
+      }
     }
 
     function confirmReset() {
@@ -317,7 +359,6 @@
       }
     }
 
-    // --- 表示更新 ---
     function updateUI() {
       document.getElementById('streak-count').innerText = state.streak;
       document.getElementById('total-count').innerText = state.total;
@@ -335,13 +376,16 @@
       document.getElementById('title-text').innerText = title;
     }
 
+    // グローバル変数を参照できるように定義
+    let month = 0;
+
     function renderStamps() {
       const container = document.getElementById('stamp-grid');
       container.innerHTML = '';
 
       const now = new Date();
       const year = now.getFullYear();
-      const month = now.getMonth();
+      month = now.getMonth();
       document.getElementById('current-month-text').innerText = `${year}年${month + 1}月`;
 
       const daysInMonth = new Date(year, month + 1, 0).getDate();
@@ -351,10 +395,11 @@
         const isAchieved = state.historyDates.includes(dateStr);
 
         const dayEl = document.createElement('div');
-        dayEl.className = `p-1 rounded-xl border flex flex-col items-center justify-center min-h-[40px] ${
+        dayEl.onclick = () => togglePastDate(dateStr, day);
+        dayEl.className = `p-1 rounded-xl border flex flex-col items-center justify-center min-h-[40px] cursor-pointer active:scale-95 transition ${
           isAchieved 
             ? 'bg-amber-500/20 border-amber-500/60 text-amber-300' 
-            : 'bg-slate-900/40 border-slate-800 text-slate-600'
+            : 'bg-slate-900/40 border-slate-800 text-slate-600 hover:border-slate-700'
         }`;
 
         dayEl.innerHTML = `
