@@ -1,458 +1,279 @@
 <!DOCTYPE html>
 <html lang="ja">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover">
-  <title>ハイテンション休肝日トラッカー</title>
-  
-  <!-- Web App (PWA) 設定 -->
-  <meta name="apple-mobile-web-app-capable" content="yes">
-  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-  <meta name="apple-mobile-web-app-title" content="休肝キング">
-  
-  <!-- 自動生成アイコン -->
-  <link rel="apple-touch-icon" id="dynamic-apple-icon">
-  <link rel="icon" id="dynamic-favicon">
-
-  <!-- Tailwind CSS & Canvas Confetti -->
-  <script src="https://cdn.tailwindcss.com"></script>
-  <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
-
-  <style>
-    @import url('https://fonts.googleapis.com/css2?family=M+PLUS+Rounded+1c:wght@700;900&display=swap');
-    body {
-      font-family: 'M PLUS Rounded 1c', -apple-system, sans-serif;
-      background: #0f172a;
-      color: #f8fafc;
-      touch-action: manipulation;
-    }
-    .text-glow {
-      text-shadow: 0 0 15px rgba(245, 158, 11, 0.6);
-    }
-    .card-glow {
-      box-shadow: 0 0 25px rgba(245, 158, 11, 0.15);
-    }
-  </style>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover">
+<title>ハイテンション休肝日トラッカー</title>
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="休肝キング">
+<link rel="apple-touch-icon" id="dynamic-apple-icon">
+<link rel="icon" id="dynamic-favicon">
+<script src="https://cdn.tailwindcss.com"></script>
+<script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=M+PLUS+Rounded+1c:wght@700;900&display=swap');
+body{font-family:'M PLUS Rounded 1c',-apple-system,sans-serif;background:#0f172a;color:#f8fafc;touch-action:manipulation}
+.text-glow{text-shadow:0 0 15px rgba(245,158,11,.6)}
+.card-glow{box-shadow:0 0 25px rgba(245,158,11,.15)}
+</style>
 </head>
 <body class="min-h-screen pb-12 flex flex-col items-center select-none">
+<header class="w-full bg-slate-900/80 backdrop-blur border-b border-slate-800 p-4 sticky top-0 z-50 flex justify-between items-center max-w-md">
+  <div class="flex items-center gap-2"><span class="text-2xl">👑</span>
+    <h1 class="text-xl font-black bg-gradient-to-r from-amber-400 via-orange-400 to-red-500 bg-clip-text text-transparent">休肝キング</h1></div>
+  <div class="text-xs bg-slate-800 px-3 py-1 rounded-full border border-slate-700 flex items-center gap-1">
+    <span class="text-amber-400">⚡</span><span id="header-level" class="font-bold text-amber-300">Lv.1</span></div>
+</header>
 
-  <!-- ヘッダー -->
-  <header class="w-full bg-slate-900/80 backdrop-blur border-b border-slate-800 p-4 sticky top-0 z-50 flex justify-between items-center max-w-md">
-    <div class="flex items-center gap-2">
-      <span class="text-2xl">👑</span>
-      <h1 class="text-xl font-black bg-gradient-to-r from-amber-400 via-orange-400 to-red-500 bg-clip-text text-transparent">
-        休肝キング
-      </h1>
+<main class="w-full max-w-md px-4 pt-4 flex flex-col gap-5">
+  <div class="bg-gradient-to-b from-slate-800 to-slate-900 border-2 border-amber-500/30 rounded-3xl p-6 text-center card-glow">
+    <button id="title-badge" onclick="tmode=1-tmode;updateUI()" class="inline-flex flex-col items-center bg-amber-500/10 border border-amber-500/30 px-5 py-1.5 rounded-2xl text-amber-400 font-bold mb-3 active:scale-95 transition">
+      <span class="text-[10px] text-amber-300/70">🏆 <span id="title-label">連続称号</span>（タップで切替）</span>
+      <span id="title-text" class="text-sm">休肝ビギナー</span>
+      <span id="title-next" class="text-[10px] text-slate-400 font-normal"></span>
+    </button>
+    <div class="my-2">
+      <div class="text-xs text-slate-400 font-bold tracking-wider mb-1">現在の連続記録</div>
+      <div class="flex items-baseline justify-center gap-1">
+        <span id="streak-count" class="text-7xl font-black text-amber-400 text-glow">0</span>
+        <span class="text-2xl font-bold text-slate-300">日連続</span></div>
+      <div id="streak-note" class="text-[11px] text-slate-400 mt-1 min-h-[16px]"></div>
     </div>
-    <div class="text-xs bg-slate-800 px-3 py-1 rounded-full border border-slate-700 flex items-center gap-1">
-      <span class="text-amber-400">⚡</span>
-      <span id="header-level" class="font-bold text-amber-300">Lv.1</span>
+    <div class="mt-3 pt-4 border-t border-slate-800/80 grid grid-cols-2 gap-2 text-slate-300 text-xs">
+      <div>🔥 通算 <span id="total-count" class="text-lg font-black text-orange-400">0</span> 日</div>
+      <div>🏅 最高連続 <span id="best-count" class="text-lg font-black text-orange-400">0</span> 日</div>
     </div>
-  </header>
+    <div class="mt-5 flex flex-col gap-2">
+      <button onclick="recordNoDrink()" class="w-full py-4 bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-400 hover:to-orange-400 active:scale-95 transition text-slate-950 font-black text-lg rounded-2xl shadow-lg shadow-amber-500/20">✨ 今日もお酒を飲まなかった！</button>
+      <div class="flex justify-start px-1">
+        <button onclick="undoTodayRecord()" class="text-xs text-amber-400/80 hover:text-amber-300 py-1">↩️ 今日の記録を取り消す</button></div>
+    </div>
+    <div id="cheer-message" class="mt-3 text-xs font-bold text-amber-300/80 bg-amber-950/40 py-2.5 px-3 rounded-xl border border-amber-900/50 min-h-[40px] flex items-center justify-center">「最高のスタートを切ろうぜ！」</div>
+  </div>
 
-  <main class="w-full max-w-md px-4 pt-4 flex flex-col gap-5">
+  <div class="grid grid-cols-2 gap-3">
+    <div class="bg-slate-800/60 border border-slate-700/50 rounded-2xl p-4 flex flex-col items-center">
+      <span class="text-xl mb-1">🪙</span><span class="text-xs text-slate-400 font-bold">浮いたお金（通算）</span>
+      <div class="mt-1 flex items-baseline gap-0.5"><span class="text-xs text-emerald-400">¥</span><span id="saved-money" class="text-xl font-black text-emerald-400">0</span></div><div class="mt-1 text-[10px] text-slate-400 text-center leading-tight">使った <span id="spent-money" class="text-pink-300 font-bold">¥0</span> ／ 残り <span id="left-money" class="text-emerald-300 font-bold">¥0</span></div></div>
+    <div class="bg-slate-800/60 border border-slate-700/50 rounded-2xl p-4 flex flex-col items-center">
+      <span class="text-xl mb-1">💓</span><span class="text-xs text-slate-400 font-bold">カットしたカロリー</span>
+      <div class="mt-1 flex items-baseline gap-0.5"><span id="saved-cal" class="text-xl font-black text-rose-400">0</span><span class="text-xs text-rose-400">kcal</span></div></div>
+  </div>
 
-    <!-- メインカウンターカード -->
-    <div class="bg-gradient-to-b from-slate-800 to-slate-900 border-2 border-amber-500/30 rounded-3xl p-6 text-center card-glow relative overflow-hidden">
-      
-      <!-- 称号バッジ -->
-      <div id="title-badge" class="inline-flex items-center gap-1.5 bg-amber-500/10 border border-amber-500/30 px-4 py-1.5 rounded-full text-amber-400 text-sm font-bold mb-3">
-        <span>🏆</span>
-        <span id="title-text">休肝ビギナー</span>
-      </div>
-
-      <!-- 連続日数カウント -->
-      <div class="my-2">
-        <div class="text-xs text-slate-400 font-bold uppercase tracking-wider mb-1">現在の連続記録</div>
-        <div class="flex items-baseline justify-center gap-1">
-          <span id="streak-count" class="text-7xl font-black text-amber-400 text-glow">0</span>
-          <span class="text-2xl font-bold text-slate-300">日連続</span>
-        </div>
-      </div>
-
-      <!-- 通算（累計）日数カウント -->
-      <div class="mt-4 pt-4 border-t border-slate-800/80 flex justify-center items-center gap-2 text-slate-300 text-sm">
-        <span class="text-orange-500">🔥</span>
-        <span>通算（累計）達成：</span>
-        <span id="total-count" class="text-lg font-black text-orange-400">0</span>
-        <span class="font-bold">日</span>
-      </div>
-
-      <!-- アクションボタン -->
-      <div class="mt-6 flex flex-col gap-2">
-        <button id="btn-success" onclick="recordNoDrink()" class="w-full py-4 bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-400 hover:to-orange-400 active:scale-95 transition text-slate-950 font-black text-lg rounded-2xl shadow-lg shadow-amber-500/20 flex items-center justify-center gap-2">
-          <span>✨ 今日もお酒を飲まなかった！</span>
-        </button>
-
-        <div class="flex justify-between items-center px-1 mt-1">
-          <button onclick="undoTodayRecord()" class="text-xs text-amber-400/80 hover:text-amber-300 py-1 flex items-center gap-1">
-            <span>↩️</span> 今日の記録を取り消す
-          </button>
-          <button onclick="confirmReset()" class="text-xs text-slate-500 hover:text-slate-400 py-1">
-            飲んでしまった（連続リセット）
-          </button>
-        </div>
-      </div>
-
-      <!-- ランダム応援セリフ -->
-      <div id="cheer-message" class="mt-4 text-xs font-bold text-amber-300/80 bg-amber-950/40 py-2.5 px-3 rounded-xl border border-amber-900/50 min-h-[40px] flex items-center justify-center">
-        「最高のスタートを切ろうぜ！」
+  <div class="bg-slate-800/60 border border-slate-700/50 rounded-2xl p-4">
+    <div class="flex justify-between items-center mb-1">
+      <div class="flex items-center gap-2"><span class="text-lg">💮</span><h2 class="font-bold text-sm text-slate-200">達成スタンプ</h2></div>
+      <div class="flex items-center gap-2">
+        <button onclick="changeMonth(-1)" class="w-7 h-7 rounded-lg bg-slate-900/60 border border-slate-700 text-slate-300 active:scale-90">◀</button>
+        <span id="current-month-text" class="text-xs font-bold text-slate-300 min-w-[84px] text-center"></span>
+        <button id="next-btn" onclick="changeMonth(1)" class="w-7 h-7 rounded-lg bg-slate-900/60 border border-slate-700 text-slate-300 active:scale-90">▶</button>
       </div>
     </div>
+    <p class="text-[10px] text-slate-400 mb-3">※過去の日・過去の月もタップでスタンプOK！連続日数も自動で計算し直します <span id="month-count" class="text-amber-300 font-bold"></span></p>
+    <div id="stamp-grid" class="grid grid-cols-7 gap-1.5 text-center"></div>
+  </div>
 
-    <!-- 節約＆カロリー成果 -->
-    <div class="grid grid-cols-2 gap-3">
-      <div class="bg-slate-800/60 border border-slate-700/50 rounded-2xl p-4 flex flex-col items-center">
-        <span class="text-xl mb-1">🪙</span>
-        <span class="text-xs text-slate-400 font-bold">浮いたお金（通算）</span>
-        <div class="mt-1 flex items-baseline gap-0.5">
-          <span class="text-xs text-emerald-400">¥</span>
-          <span id="saved-money" class="text-xl font-black text-emerald-400">0</span>
-        </div>
-      </div>
-
-      <div class="bg-slate-800/60 border border-slate-700/50 rounded-2xl p-4 flex flex-col items-center">
-        <span class="text-xl mb-1">💓</span>
-        <span class="text-xs text-slate-400 font-bold">カットしたカロリー</span>
-        <div class="mt-1 flex items-baseline gap-0.5">
-          <span id="saved-cal" class="text-xl font-black text-rose-400">0</span>
-          <span class="text-xs text-rose-400">kcal</span>
-        </div>
-      </div>
+  <div class="bg-slate-800/60 border border-slate-700/50 rounded-2xl p-4">
+    <div class="flex justify-between items-center mb-2">
+      <div class="flex items-center gap-2"><span class="text-lg">🎁</span><h2 class="font-bold text-sm text-slate-200">浮いたお金のご褒美ガチャ</h2></div>
+      <button onclick="rollReward()" class="text-xs bg-purple-600/40 hover:bg-purple-600/60 border border-purple-500/50 text-purple-300 font-bold px-3 py-1 rounded-lg active:scale-95 transition"><span id="roll-label">引く！</span></button>
     </div>
+    <div id="reward-result" class="text-xs text-slate-300 bg-slate-900/60 p-3 rounded-xl border border-slate-800 min-h-[44px] flex items-center justify-center text-center">浮いたお金を使ってガチャに挑戦！出たご褒美は図鑑に集まるよ</div>
+  </div>
 
-    <!-- 今月のスタンプカード -->
-    <div class="bg-slate-800/60 border border-slate-700/50 rounded-2xl p-4">
-      <div class="flex justify-between items-center mb-1">
-        <div class="flex items-center gap-2">
-          <span class="text-lg">💮</span>
-          <h2 class="font-bold text-sm text-slate-200">今月の達成スタンプ</h2>
-        </div>
-        <span id="current-month-text" class="text-xs font-bold text-slate-400"></span>
-      </div>
-      <p class="text-[10px] text-slate-400 mb-3">※押し忘れた日をタップすると後からスタンプを押せます！</p>
-      <div id="stamp-grid" class="grid grid-cols-7 gap-1.5 text-center">
-        <!-- JSで生成 -->
-      </div>
-    </div>
+  <div class="bg-slate-800/60 border border-slate-700/50 rounded-2xl p-4">
+    <div class="flex items-center gap-2 mb-3"><span class="text-lg">📖</span><h2 class="font-bold text-sm text-slate-200">コレクション図鑑</h2></div>
+    <div id="book-tabs" class="grid grid-cols-3 gap-1.5 mb-3"></div>
+    <div id="book" class="grid grid-cols-3 gap-2"></div>
+  </div>
+</main>
+<div id="toast" class="fixed left-1/2 -translate-x-1/2 bottom-6 z-[100] max-w-xs w-[90%] bg-slate-900 border-2 border-amber-400 text-amber-300 text-xs font-bold text-center px-4 py-3 rounded-2xl shadow-xl transition-all opacity-0 pointer-events-none"></div>
 
-    <!-- ご褒美ガチャ -->
-    <div class="bg-slate-800/60 border border-slate-700/50 rounded-2xl p-4">
-      <div class="flex justify-between items-center mb-2">
-        <div class="flex items-center gap-2">
-          <span class="text-lg">🎁</span>
-          <h2 class="font-bold text-sm text-slate-200">浮いたお金のご褒美ガチャ</h2>
-        </div>
-        <button onclick="rollReward()" class="text-xs bg-purple-600/40 hover:bg-purple-600/60 border border-purple-500/50 text-purple-300 font-bold px-3 py-1 rounded-lg active:scale-95 transition">
-          引く！
-        </button>
-      </div>
-      <div id="reward-result" class="text-xs text-slate-300 bg-slate-900/60 p-3 rounded-xl border border-slate-800 min-h-[44px] flex items-center justify-center text-center">
-        ボタンを押して浮いたお金で買えるご褒美をチェック！
-      </div>
-    </div>
+<script>
+const KEY='no_alcohol_tracker_state', MONEY=500, CAL=300, COST=500; // COST=ガチャ1回の金額
+const CHEER=["肝臓がスタンディングオベーションしてるぞ！","最高の自分に一歩前進！かっこよすぎる！","意志の強さがダイヤモンド級！","明日覚醒した朝が待っている！","その調子！身体の細胞が歓喜の舞！","お酒なしで勝つ夜、最高にクールだ！","節約＆健康のダブルコンボ達成！"];
+const RAR={N:['ノーマル','border-slate-500 text-slate-300 bg-slate-700/30'],R:['レア','border-sky-400/70 text-sky-300 bg-sky-500/10'],SR:['スーパーレア','border-purple-400/70 text-purple-300 bg-purple-500/10'],LR:['レジェンド','border-amber-400 text-amber-300 bg-amber-500/15 shadow-[0_0_12px_rgba(245,158,11,.45)]']};
+const REWARDS=[
+ {min:500,r:'N',icon:'🍨',name:'高級ハーゲンダッツアイス'},{min:1000,r:'N',icon:'☕',name:'ちょっと良いカフェのスペシャルラテ'},
+ {min:2000,r:'R',icon:'🍜',name:'ラーメン特製トッピング全のせ'},{min:3000,r:'R',icon:'🥩',name:'極上スモーキーカルパス＆贅沢つまみ'},
+ {min:5000,r:'SR',icon:'♨️',name:'日帰り温泉・サウナで極上のととのい'},{min:10000,r:'SR',icon:'🥓',name:'極上黒毛和牛焼肉ランチ'},
+ {min:20000,r:'LR',icon:'🎮',name:'欲しかった洋服やゲームソフト'},{min:30000,r:'LR',icon:'🚃',name:'近場の温泉旅行'}];
+const has=(s,p)=>s.dates.some(d=>d.endsWith(p));
+const BADGES=[
+ {id:'b1',n:'初めの一歩',d:'通算1日達成',i:'🐾',r:'N',c:s=>s.total>=1},
+ {id:'b2',n:'三日天下',d:'連続3日達成',i:'🛡️',r:'N',c:s=>s.best>=3},
+ {id:'b4',n:'二桁の領域',d:'通算10日達成',i:'⭐',r:'N',c:s=>s.total>=10},
+ {id:'b3',n:'一週間の覇者',d:'連続7日達成',i:'⚡',r:'R',c:s=>s.best>=7},
+ {id:'b5',n:'鉄の意志',d:'連続14日達成',i:'⚓',r:'R',c:s=>s.best>=14},
+ {id:'b9',n:'四半期の戦士',d:'通算25日達成',i:'🗡️',r:'R',c:s=>s.total>=25},
+ {id:'b6',n:'肝臓の守護神',d:'通算30日達成',i:'👑',r:'SR',c:s=>s.total>=30},
+ {id:'b7',n:'不滅の伝説',d:'連続30日達成',i:'🔥',r:'SR',c:s=>s.best>=30},
+ {id:'b10',n:'半世紀の猛者',d:'通算50日達成',i:'💎',r:'SR',c:s=>s.total>=50},
+ {id:'b8',n:'超人類',d:'通算100日達成',i:'🚀',r:'LR',c:s=>s.total>=100},
+ {id:'b11',n:'百日の神話',d:'連続100日達成',i:'🐉',r:'LR',c:s=>s.best>=100},
+ {id:'b12',n:'休肝皇帝',d:'通算365日達成',i:'🏛️',r:'LR',c:s=>s.total>=365},
+ {id:'h1',n:'ラッキーセブン',d:'通算77日に到達',i:'🍀',r:'SR',h:1,c:s=>s.total>=77},
+ {id:'h2',n:'年越し休肝',d:'大晦日か元日にスタンプ',i:'🎍',r:'R',h:1,c:s=>has(s,'-12-31')||has(s,'-01-01')},
+ {id:'h3',n:'ゾロ目の王',d:'通算111日に到達',i:'🎰',r:'LR',h:1,c:s=>s.total>=111}];
+const T_STREAK=[[0,'休肝ビギナー'],[3,'覚醒せし休肝者 ⚡'],[7,'肝臓の守護神 👑'],[14,'鉄の意志を持つ男 🛡️'],[30,'宇宙規模の不飲者 🌌'],[100,'休肝の神話 🐉']];
+const T_TOTAL=[[0,'見習い休肝士'],[5,'休肝ルーキー 🌱'],[10,'休肝ファイター ⚔️'],[30,'休肝マスター 🎖️'],[50,'休肝エリート 💎'],[100,'休肝キング 👑'],[365,'休肝皇帝 🏛️']];
+const MEMO=['🎍','👹','🎎','🌸','🎏','☔','🎋','🌻','🎑','🎃','🍁','🎄'];
 
-    <!-- 達成バッジ図鑑 -->
-    <div class="bg-slate-800/60 border border-slate-700/50 rounded-2xl p-4">
-      <div class="flex items-center gap-2 mb-3">
-        <span class="text-lg">🥇</span>
-        <h2 class="font-bold text-sm text-slate-200">実績バッジ図鑑</h2>
-      </div>
-      <div id="badge-container" class="grid grid-cols-4 gap-2">
-        <!-- JSで生成 -->
-      </div>
-    </div>
+let state={historyDates:[],gacha:{},seen:null,spent:0}, st, viewY, viewM, tab=0, tmode=0;
+const pad=n=>String(n).padStart(2,'0');
+const ds=(y,m,d)=>`${y}-${pad(m+1)}-${pad(d)}`;
+const todayStr=()=>{const t=new Date();return ds(t.getFullYear(),t.getMonth(),t.getDate())};
+const dn=s=>{const [y,m,d]=s.split('-').map(Number);return Math.round(Date.UTC(y,m-1,d)/864e5)};
+const $=id=>document.getElementById(id);
 
-  </main>
+// 連続・通算はすべてスタンプ履歴から自動計算（後から押した日もつながる）
+function calc(){
+  const dates=[...new Set(state.historyDates)].sort(); state.historyDates=dates;
+  let best=0,run=0,prev=null;
+  dates.forEach(d=>{const n=dn(d);run=(prev!==null&&n-prev===1)?run+1:1;prev=n;best=Math.max(best,run)});
+  const gap=prev===null?99:dn(todayStr())-prev;
+  st={dates,total:dates.length,best,cur:gap<=1?run:0,todayDone:gap===0};
+}
+function monthsInfo(){
+  const now=new Date(); let y=now.getFullYear(),m=now.getMonth(),sy=y,sm=m;
+  if(st.dates[0]){sy=+st.dates[0].slice(0,4);sm=+st.dates[0].slice(5,7)-1}
+  const out=[];
+  while(y>sy||(y===sy&&m>=sm)){
+    const dim=new Date(y,m+1,0).getDate(),p=`${y}-${pad(m+1)}`,c=st.dates.filter(d=>d.startsWith(p)).length;
+    out.push({id:'m-'+p,y,m,c,dim,full:c===dim}); if(--m<0){m=11;y--}
+  }
+  return out;
+}
+const unlocked=()=>BADGES.filter(b=>b.c(st)).map(b=>b.id).concat(monthsInfo().filter(x=>x.full).map(x=>x.id));
 
-  <script>
-    const MONEY_PER_DAY = 500;
-    const CAL_PER_DAY = 300;
+function load(){
+  try{const o=JSON.parse(localStorage.getItem(KEY)||'{}');
+    state.historyDates=o.historyDates||[];state.gacha=o.gacha||{};state.spent=o.spent||0;state.seen=o.seen||null;}catch(e){}
+}
+const save=()=>{try{localStorage.setItem(KEY,JSON.stringify(state))}catch(e){}};
 
-    const CHEER_MESSAGES = [
-      "肝臓がスタンディングオベーションしてるぞ！",
-      "最高の自分に一歩前進！かっこよすぎる！",
-      "意志の強さがダイヤモンド級！",
-      "明日覚醒した朝が待っている！",
-      "その調子！身体の細胞が歓喜の舞！",
-      "お酒なしで勝つ夜、最高にクールだ！",
-      "節約＆健康のダブルコンボ達成！"
-    ];
+function toast(msg){const t=$('toast');t.innerText=msg;t.style.opacity=1;clearTimeout(toast.t);toast.t=setTimeout(()=>t.style.opacity=0,3200)}
+function checkNew(){
+  const ids=unlocked();
+  if(state.seen===null){state.seen=ids;return}
+  const fresh=ids.filter(i=>!state.seen.includes(i));
+  if(fresh.length){
+    state.seen=state.seen.concat(fresh);
+    const b=BADGES.find(x=>x.id===fresh[0]);
+    toast(`🎉 新バッジ獲得！ ${b?b.i+' '+b.n:'月間記念バッジ'}${fresh.length>1?` ほか${fresh.length-1}個`:''}`);
+    if(typeof confetti==='function')confetti({particleCount:160,spread:100,origin:{y:.5}});
+  }
+}
+function refresh(){calc();checkNew();save();updateUI();renderStamps();renderBook()}
 
-    const REWARDS = [
-      { min: 500, name: "高級ハーゲンダッツアイス 🍨" },
-      { min: 1000, name: "ちょっと良いカフェのスペシャルラテ ☕" },
-      { min: 2000, name: "ラーメン特製トッピング全のせ 🍜" },
-      { min: 3000, name: "極上スモーキーカルパス＆贅沢つまみ 🥩" },
-      { min: 5000, name: "日帰り温泉・サウナで極上のととのい ♨️" },
-      { min: 10000, name: "極上黒毛和牛焼肉ランチ 🥩" },
-      { min: 20000, name: "欲しかった洋服やゲームソフト 🎮" }
-    ];
+function addDate(s){if(!state.historyDates.includes(s))state.historyDates.push(s)}
+function recordNoDrink(){
+  if(state.historyDates.includes(todayStr())){alert("今日はすでに記録済みです！明日もこの調子で頑張りましょう🔥");return}
+  addDate(todayStr());
+  const now=new Date();viewY=now.getFullYear();viewM=now.getMonth();
+  refresh();
+  if(typeof confetti==='function')confetti({particleCount:100,spread:70,origin:{y:.6}});
+  $('cheer-message').innerText=`「${CHEER[Math.floor(Math.random()*CHEER.length)]}」`;
+}
+function undoTodayRecord(){
+  const t=todayStr();
+  if(!state.historyDates.includes(t)){alert("今日の記録はまだありません。");return}
+  if(confirm("今日の記録を取り消しますか？")){state.historyDates=state.historyDates.filter(d=>d!==t);refresh()}
+}
+function toggleDate(s){
+  if(s>todayStr()){alert("未来の日付は記録できません。");return}
+  const label=`${+s.slice(5,7)}月${+s.slice(8)}日`;
+  if(state.historyDates.includes(s)){
+    if(confirm(`${label}の記録を取り消しますか？`)){state.historyDates=state.historyDates.filter(d=>d!==s);refresh()}
+  }else{addDate(s);refresh();if(typeof confetti==='function')confetti({particleCount:40,spread:50,origin:{y:.7}})}
+}
+function changeMonth(dir){
+  const now=new Date();let y=viewY,m=viewM+dir;
+  if(m<0){m=11;y--}if(m>11){m=0;y++}
+  if(y>now.getFullYear()||(y===now.getFullYear()&&m>now.getMonth()))return;
+  viewY=y;viewM=m;renderStamps();
+}
 
-    const BADGES = [
-      { id: 'b1', name: '初めの一歩', desc: '通算1日達成', reqType: 'total', reqVal: 1, icon: '🐾' },
-      { id: 'b2', name: '三日天下', desc: '連続3日達成', reqType: 'streak', reqVal: 3, icon: '🛡️' },
-      { id: 'b3', name: '一週間の覇者', desc: '連続7日達成', reqType: 'streak', reqVal: 7, icon: '⚡' },
-      { id: 'b4', name: '二桁の領域', desc: '通算10日達成', reqType: 'total', reqVal: 10, icon: '⭐' },
-      { id: 'b5', name: '鉄の意志', desc: '連続14日達成', reqType: 'streak', reqVal: 14, icon: '⚓' },
-      { id: 'b6', name: '肝臓の守護神', desc: '通算30日達成', reqType: 'total', reqVal: 30, icon: '👑' },
-      { id: 'b7', name: '不滅の伝説', desc: '連続30日達成', reqType: 'streak', reqVal: 30, icon: '🔥' },
-      { id: 'b8', name: '超人類', desc: '通算100日達成', reqType: 'total', reqVal: 100, icon: '🚀' }
-    ];
+const pick=(a,v)=>a.filter(x=>v>=x[0]).pop();
+function updateUI(){
+  $('streak-count').innerText=st.cur;$('total-count').innerText=st.total;$('best-count').innerText=st.best;
+  $('saved-money').innerText=(st.total*MONEY).toLocaleString();$('saved-cal').innerText=(st.total*CAL).toLocaleString();
+  const spent=state.spent||0,left=Math.max(0,st.total*MONEY-spent);
+  $('spent-money').innerText='¥'+spent.toLocaleString();$('left-money').innerText='¥'+left.toLocaleString();
+  $('roll-label').innerText=`引く！（¥${COST.toLocaleString()}）`;
+  $('header-level').innerText=`Lv.${Math.floor(st.total/5)+1}`;
+  const arr=tmode?T_TOTAL:T_STREAK,v=tmode?st.total:st.cur,nx=arr.find(x=>x[0]>v);
+  $('title-label').innerText=tmode?'通算称号':'連続称号';
+  $('title-text').innerText=pick(arr,v)[1];
+  $('title-next').innerText=nx?`次の称号まであと${nx[0]-v}日`:'最高称号に到達！';
+  $('streak-note').innerText=st.cur>0&&!st.todayDone?'今日スタンプを押すと連続記録が伸びるよ！':'';
+}
 
-    let state = {
-      streak: 0,
-      total: 0,
-      lastRecordedDate: null,
-      historyDates: []
-    };
+function renderStamps(){
+  const c=$('stamp-grid');c.innerHTML='';
+  ['日','月','火','水','木','金','土'].forEach(w=>c.insertAdjacentHTML('beforeend',`<div class="text-[10px] text-slate-500 font-bold">${w}</div>`));
+  const first=new Date(viewY,viewM,1).getDay(),dim=new Date(viewY,viewM+1,0).getDate(),today=todayStr();
+  let cnt=0;
+  for(let i=0;i<first;i++)c.insertAdjacentHTML('beforeend','<div></div>');
+  for(let d=1;d<=dim;d++){
+    const s=ds(viewY,viewM,d),on=st.dates.includes(s),fut=s>today;if(on)cnt++;
+    const el=document.createElement('div');
+    el.className=`p-1 rounded-xl border flex flex-col items-center justify-center min-h-[40px] transition ${fut?'opacity-30 border-slate-800 text-slate-700':'cursor-pointer active:scale-95'} ${on?'bg-amber-500/20 border-amber-500/60 text-amber-300':(fut?'':'bg-slate-900/40 border-slate-800 text-slate-600 hover:border-slate-700')} ${s===today?'ring-1 ring-amber-400':''}`;
+    if(!fut)el.onclick=()=>toggleDate(s);
+    el.innerHTML=`<span class="text-[10px] font-bold">${d}</span><span class="text-xs mt-0.5">${on?'✨':'・'}</span>`;
+    c.appendChild(el);
+  }
+  $('current-month-text').innerText=`${viewY}年${viewM+1}月`;
+  $('month-count').innerText=`（今月 ${cnt}/${dim}日）`;
+  const now=new Date();
+  $('next-btn').style.opacity=(viewY===now.getFullYear()&&viewM===now.getMonth())?.3:1;
+}
 
-    window.onload = function() {
-      try {
-        generateAppIcon();
-        loadState();
-        updateUI();
-        renderStamps();
-        renderBadges();
-      } catch (e) {
-        console.error("初期化エラー:", e);
-      }
-    };
+function rollReward(){
+  const earned=st.total*MONEY,bal=earned-(state.spent||0),av=REWARDS.filter(r=>r.min<=earned),el=$('reward-result');
+  if(!av.length){el.innerHTML='<span class="text-amber-400 font-bold">1日達成すると「高級アイス」が解放されるぞ！まずは1日頑張ろう！</span>';return}
+  if(bal<COST){el.innerHTML=`<span class="text-amber-400 font-bold">お金が足りない！あと¥${(COST-Math.max(0,bal)).toLocaleString()}（あと${Math.ceil((COST-Math.max(0,bal))/MONEY)}日休肝）でガチャが引けるよ</span>`;return}
+  state.spent=(state.spent||0)+COST;
+  const r=av[Math.floor(Math.random()*av.length)],isNew=!state.gacha[r.name];
+  state.gacha[r.name]=(state.gacha[r.name]||0)+1;save();updateUI();
+  el.innerHTML=`<div class="flex flex-col items-center gap-0.5"><span class="text-amber-400 font-bold">🎉 浮いたお金でこれが買える！${isNew?' <span class="text-pink-400">NEW!</span>':''}</span>
+    <span class="text-sm font-black text-white">${r.icon} ${r.name}</span><span class="text-[10px] ${RAR[r.r][1].split(' ')[1]}">【${RAR[r.r][0]}】</span></div>`;
+  if((r.r==='SR'||r.r==='LR')&&typeof confetti==='function')confetti({particleCount:120,spread:80,origin:{y:.6}});
+  renderBook();
+}
 
-    function generateAppIcon() {
-      try {
-        const canvas = document.createElement('canvas');
-        canvas.width = 512;
-        canvas.height = 512;
-        const ctx = canvas.getContext('2d');
+function tile(on,cls,icon,name,desc,rar,extra=''){
+  return `<div class="flex flex-col items-center p-2 rounded-xl border text-center ${on?RAR[rar][1]:'bg-slate-900/40 border-slate-800/80 text-slate-600 opacity-50'} ${cls}">
+    <div class="text-xl mb-0.5">${icon}</div><span class="text-[10px] font-black w-full leading-tight">${name}</span>
+    <span class="text-[9px] opacity-75 leading-tight">${desc}</span>
+    <span class="text-[8px] mt-0.5 font-bold opacity-80">${on?RAR[rar][0]:'LOCKED'}${extra}</span></div>`;
+}
+function renderBook(){
+  const ul=unlocked(),ms=monthsInfo(),bu=BADGES.filter(b=>ul.includes(b.id)).length,
+    ru=REWARDS.filter(r=>state.gacha[r.name]).length,mu=ms.filter(x=>x.full).length;
+  const names=[`バッジ ${bu}/${BADGES.length}`,`ご褒美 ${ru}/${REWARDS.length}`,`月間 ${mu}/${ms.length}`];
+  $('book-tabs').innerHTML=names.map((n,i)=>`<button onclick="tab=${i};renderBook()" class="text-[11px] font-bold py-1.5 rounded-lg border ${tab===i?'bg-amber-500/20 border-amber-500/60 text-amber-300':'bg-slate-900/40 border-slate-700 text-slate-400'}">${n}</button>`).join('');
+  let h='';
+  if(tab===0)h=BADGES.map(b=>{const on=ul.includes(b.id);
+    return on||!b.h?tile(on,'',b.i,b.n,b.d,b.r):tile(false,'','❓','？？？','ヒミツの条件…',b.r)}).join('');
+  else if(tab===1)h=REWARDS.map(r=>{const n=state.gacha[r.name]||0;
+    return n?tile(true,'',r.icon,r.name,'¥'+r.min.toLocaleString()+'〜',r.r,` ×${n}`):tile(false,'','❓','？？？','¥'+r.min.toLocaleString()+'〜で出現',r.r)}).join('');
+  else h=ms.map(x=>x.full?tile(true,'',MEMO[x.m],`${x.y}年${x.m+1}月`,'全日達成！','SR'):tile(false,'',MEMO[x.m],`${x.y}年${x.m+1}月`,`${x.c}/${x.dim}日`,'SR')).join('');
+  $('book').innerHTML=h;
+}
 
-        const grad = ctx.createLinearGradient(0, 0, 512, 512);
-        grad.addColorStop(0, '#0f172a');
-        grad.addColorStop(0.5, '#1e1b4b');
-        grad.addColorStop(1, '#311042');
-        ctx.fillStyle = grad;
-        ctx.fillRect(0, 0, 512, 512);
-
-        ctx.beginPath();
-        ctx.arc(256, 256, 210, 0, Math.PI * 2);
-        ctx.strokeStyle = '#f59e0b';
-        ctx.lineWidth = 16;
-        ctx.stroke();
-
-        ctx.font = '200px serif';
-        ctx.textAlign = 'center';
-        ctx.textBaseline = 'middle';
-        ctx.fillText('👑', 256, 240);
-
-        const dataUrl = canvas.toDataURL('image/png');
-        document.getElementById('dynamic-apple-icon').href = dataUrl;
-        document.getElementById('dynamic-favicon').href = dataUrl;
-      } catch (e) {}
-    }
-
-    function loadState() {
-      const saved = localStorage.getItem('no_alcohol_tracker_state');
-      if (saved) {
-        try { state = JSON.parse(saved); } catch(e) {}
-      }
-    }
-
-    function saveState() {
-      localStorage.setItem('no_alcohol_tracker_state', JSON.stringify(state));
-    }
-
-    function getTodayString() {
-      const today = new Date();
-      const y = today.getFullYear();
-      const m = String(today.getMonth() + 1).padStart(2, '0');
-      const d = String(today.getDate()).padStart(2, '0');
-      return `${y}-${m}-${d}`;
-    }
-
-    // --- 今日の記録 ---
-    function recordNoDrink() {
-      const today = getTodayString();
-
-      if (state.lastRecordedDate === today || state.historyDates.includes(today)) {
-        alert("今日はすでに記録済みです！明日もこの調子で頑張りましょう🔥");
-        return;
-      }
-
-      state.streak += 1;
-      state.total += 1;
-      state.lastRecordedDate = today;
-      state.historyDates.push(today);
-
-      saveState();
-      updateUI();
-      renderStamps();
-      renderBadges();
-
-      if (typeof confetti === 'function') {
-        confetti({ particleCount: 100, spread: 70, origin: { y: 0.6 } });
-      }
-
-      const randomMsg = CHEER_MESSAGES[Math.floor(Math.random() * CHEER_MESSAGES.length)];
-      document.getElementById('cheer-message').innerText = `「${randomMsg}」`;
-    }
-
-    // --- 今日の記録の取り消し ---
-    function undoTodayRecord() {
-      const today = getTodayString();
-      if (!state.historyDates.includes(today)) {
-        alert("今日の記録はまだありません。");
-        return;
-      }
-
-      if (confirm("今日の記録を取り消しますか？\n（連続・通算カウントが1日減ります）")) {
-        state.historyDates = state.historyDates.filter(d => d !== today);
-        if (state.streak > 0) state.streak -= 1;
-        if (state.total > 0) state.total -= 1;
-        state.lastRecordedDate = state.historyDates[state.historyDates.length - 1] || null;
-
-        saveState();
-        updateUI();
-        renderStamps();
-        renderBadges();
-        alert("今日の記録を取り消しました！");
-      }
-    }
-
-    // --- 過去の日付（押し忘れた日）をタップして追加/削除 ---
-    function togglePastDate(dateStr, dayNum) {
-      const today = getTodayString();
-      if (dateStr > today) {
-        alert("未来の日付は記録できません。");
-        return;
-      }
-
-      const isRecorded = state.historyDates.includes(dateStr);
-
-      if (!isRecorded) {
-        if (confirm(`${month + 1}月${dayNum}日の記録を追加しますか？`)) {
-          state.historyDates.push(dateStr);
-          state.total += 1;
-          saveState();
-          updateUI();
-          renderStamps();
-          renderBadges();
-        }
-      } else {
-        if (confirm(`${month + 1}月${dayNum}日の記録を取り消しますか？`)) {
-          state.historyDates = state.historyDates.filter(d => d !== dateStr);
-          if (state.total > 0) state.total -= 1;
-          if (dateStr === today && state.streak > 0) state.streak -= 1;
-          saveState();
-          updateUI();
-          renderStamps();
-          renderBadges();
-        }
-      }
-    }
-
-    function confirmReset() {
-      if (confirm("本当に連続記録をリセットしますか？\n（※通算の達成日数は消えずにそのまま残ります！）")) {
-        state.streak = 0;
-        saveState();
-        updateUI();
-        renderBadges();
-      }
-    }
-
-    function updateUI() {
-      document.getElementById('streak-count').innerText = state.streak;
-      document.getElementById('total-count').innerText = state.total;
-      document.getElementById('saved-money').innerText = (state.total * MONEY_PER_DAY).toLocaleString();
-      document.getElementById('saved-cal').innerText = (state.total * CAL_PER_DAY).toLocaleString();
-
-      const level = Math.floor(state.total / 5) + 1;
-      document.getElementById('header-level').innerText = `Lv.${level}`;
-
-      let title = "休肝ビギナー";
-      if (state.streak >= 30) title = "宇宙規模の不飲者 🌌";
-      else if (state.streak >= 14) title = "鉄の意志を持つ男 🛡️";
-      else if (state.streak >= 7) title = "肝臓の守護神 👑";
-      else if (state.streak >= 3) title = "覚醒せし休肝者 ⚡";
-      document.getElementById('title-text').innerText = title;
-    }
-
-    // グローバル変数を参照できるように定義
-    let month = 0;
-
-    function renderStamps() {
-      const container = document.getElementById('stamp-grid');
-      container.innerHTML = '';
-
-      const now = new Date();
-      const year = now.getFullYear();
-      month = now.getMonth();
-      document.getElementById('current-month-text').innerText = `${year}年${month + 1}月`;
-
-      const daysInMonth = new Date(year, month + 1, 0).getDate();
-
-      for (let day = 1; day <= daysInMonth; day++) {
-        const dateStr = `${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
-        const isAchieved = state.historyDates.includes(dateStr);
-
-        const dayEl = document.createElement('div');
-        dayEl.onclick = () => togglePastDate(dateStr, day);
-        dayEl.className = `p-1 rounded-xl border flex flex-col items-center justify-center min-h-[40px] cursor-pointer active:scale-95 transition ${
-          isAchieved 
-            ? 'bg-amber-500/20 border-amber-500/60 text-amber-300' 
-            : 'bg-slate-900/40 border-slate-800 text-slate-600 hover:border-slate-700'
-        }`;
-
-        dayEl.innerHTML = `
-          <span class="text-[10px] font-bold">${day}</span>
-          <span class="text-xs mt-0.5">${isAchieved ? '✨' : '・'}</span>
-        `;
-        container.appendChild(dayEl);
-      }
-    }
-
-    function rollReward() {
-      const totalSaved = state.total * MONEY_PER_DAY;
-      const availableRewards = REWARDS.filter(r => r.min <= totalSaved);
-      const resultEl = document.getElementById('reward-result');
-
-      if (availableRewards.length === 0) {
-        resultEl.innerHTML = `<span class="text-amber-400 font-bold">1日達成すると「高級アイス」が解放されるぞ！まずは今日1日頑張ろう！</span>`;
-        return;
-      }
-
-      const reward = availableRewards[Math.floor(Math.random() * availableRewards.length)];
-      resultEl.innerHTML = `
-        <div class="flex flex-col items-center gap-0.5">
-          <span class="text-amber-400 font-bold">🎉 浮いたお金でこれが買える！</span>
-          <span class="text-sm font-black text-white">${reward.name}</span>
-        </div>
-      `;
-    }
-
-    function renderBadges() {
-      const container = document.getElementById('badge-container');
-      container.innerHTML = '';
-
-      BADGES.forEach(badge => {
-        const isUnlocked = badge.reqType === 'streak' 
-          ? state.streak >= badge.reqVal 
-          : state.total >= badge.reqVal;
-
-        const el = document.createElement('div');
-        el.className = `flex flex-col items-center p-2 rounded-xl border text-center transition ${
-          isUnlocked 
-            ? 'bg-amber-500/10 border-amber-500/50 text-amber-300' 
-            : 'bg-slate-900/40 border-slate-800/80 text-slate-600 opacity-40'
-        }`;
-
-        el.innerHTML = `
-          <div class="text-lg mb-0.5">${badge.icon}</div>
-          <span class="text-[10px] font-black truncate w-full">${badge.name}</span>
-          <span class="text-[9px] opacity-75">${badge.desc}</span>
-        `;
-        container.appendChild(el);
-      });
-    }
-  </script>
+function generateAppIcon(){
+  try{const c=document.createElement('canvas');c.width=c.height=512;const x=c.getContext('2d');
+    const g=x.createLinearGradient(0,0,512,512);g.addColorStop(0,'#0f172a');g.addColorStop(.5,'#1e1b4b');g.addColorStop(1,'#311042');
+    x.fillStyle=g;x.fillRect(0,0,512,512);x.beginPath();x.arc(256,256,210,0,Math.PI*2);x.strokeStyle='#f59e0b';x.lineWidth=16;x.stroke();
+    x.font='200px serif';x.textAlign='center';x.textBaseline='middle';x.fillText('👑',256,240);
+    const u=c.toDataURL('image/png');$('dynamic-apple-icon').href=u;$('dynamic-favicon').href=u}catch(e){}
+}
+window.onload=()=>{
+  try{generateAppIcon();load();const n=new Date();viewY=n.getFullYear();viewM=n.getMonth();calc();checkNew();save();updateUI();renderStamps();renderBook()}
+  catch(e){console.error('初期化エラー:',e)}
+};
+</script>
 </body>
 </html>
