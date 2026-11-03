@@ -1,0 +1,182 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover">
+  <title>ハイテンション休肝日トラッカー</title>
+  
+  <!-- Web App設定 -->
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="休肝キング">
+  
+  <!-- 自動生成アイコン（JavaScriptで動的に挿入されます） -->
+  <link rel="apple-touch-icon" id="dynamic-apple-icon">
+  <link rel="icon" id="dynamic-favicon">
+
+  <!-- Tailwind CSS & Lucide Icons & Canvas Confetti -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://unpkg.com/lucide@latest"></script>
+  <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=M+PLUS+Rounded+1c:wght@700;900&display=swap');
+    body {
+      font-family: 'M PLUS Rounded 1c', sans-serif;
+      background: #0f172a;
+      color: #f8fafc;
+      touch-action: manipulation;
+    }
+    .text-glow {
+      text-shadow: 0 0 15px rgba(245, 158, 11, 0.6);
+    }
+    .card-glow {
+      box-shadow: 0 0 25px rgba(245, 158, 11, 0.15);
+    }
+    .animate-bounce-short {
+      animation: bounce 0.6s ease-in-out 2;
+    }
+  </style>
+</head>
+<body class="min-h-screen pb-12 flex flex-col items-center select-none">
+
+  <!-- ヘッダー -->
+  <header class="w-full bg-slate-900/80 backdrop-blur border-b border-slate-800 p-4 sticky top-0 z-50 flex justify-between items-center max-w-md">
+    <div class="flex items-center gap-2">
+      <i data-lucide="crown" class="w-7 h-7 text-amber-400"></i>
+      <h1 class="text-xl font-black bg-gradient-to-r from-amber-400 via-orange-400 to-red-500 bg-clip-text text-transparent">
+        休肝キング
+      </h1>
+    </div>
+    <div class="text-xs bg-slate-800 px-3 py-1 rounded-full border border-slate-700 flex items-center gap-1">
+      <i data-lucide="zap" class="w-3.5 h-3.5 text-amber-400 fill-amber-400"></i>
+      <span id="header-level" class="font-bold text-amber-300">Lv.1</span>
+    </div>
+  </header>
+
+  <main class="w-full max-w-md px-4 pt-4 flex flex-col gap-5">
+
+    <!-- メインカウンターカード -->
+    <div class="bg-gradient-to-b from-slate-800 to-slate-900 border-2 border-amber-500/30 rounded-3xl p-6 text-center card-glow relative overflow-hidden">
+      
+      <!-- 称号バッジ -->
+      <div id="title-badge" class="inline-flex items-center gap-1.5 bg-amber-500/10 border border-amber-500/30 px-4 py-1.5 rounded-full text-amber-400 text-sm font-bold mb-3">
+        <i data-lucide="award" class="w-4 h-4"></i>
+        <span id="title-text">休肝ビギナー</span>
+      </div>
+
+      <!-- 連続日数カウント -->
+      <div class="my-2">
+        <div class="text-xs text-slate-400 font-bold uppercase tracking-wider mb-1">現在の連続記録</div>
+        <div class="flex items-baseline justify-center gap-1">
+          <span id="streak-count" class="text-7xl font-black text-amber-400 text-glow">0</span>
+          <span class="text-2xl font-bold text-slate-300">日連続</span>
+        </div>
+      </div>
+
+      <!-- 通算（累計）日数カウント -->
+      <div class="mt-4 pt-4 border-t border-slate-800/80 flex justify-center items-center gap-2 text-slate-300 text-sm">
+        <i data-lucide="flame" class="w-4 h-4 text-orange-500"></i>
+        <span>通算（累計）達成：</span>
+        <span id="total-count" class="text-lg font-black text-orange-400">0</span>
+        <span class="font-bold">日</span>
+      </div>
+
+      <!-- アクションボタン -->
+      <div class="mt-6 flex flex-col gap-3">
+        <button id="btn-success" onclick="recordNoDrink()" class="w-full py-4 bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-400 hover:to-orange-400 active:scale-95 transition text-slate-950 font-black text-lg rounded-2xl shadow-lg shadow-amber-500/20 flex items-center justify-center gap-2">
+          <i data-lucide="sparkles" class="w-6 h-6 fill-slate-950"></i>
+          <span>今日もお酒を飲まなかった！</span>
+        </button>
+
+        <button id="btn-reset" onclick="confirmReset()" class="text-xs text-slate-500 hover:text-slate-400 py-1">
+          飲んでしまった（連続カウントをリセット）
+        </button>
+      </div>
+
+      <!-- ランダム応援セリフ -->
+      <div id="cheer-message" class="mt-4 text-xs font-bold text-amber-300/80 bg-amber-950/40 py-2 px-3 rounded-xl border border-amber-900/50 min-h-[36px] flex items-center justify-center">
+        「最高のスタートを切ろうぜ！」
+      </div>
+    </div>
+
+    <!-- 節約＆カロリー成果 -->
+    <div class="grid grid-cols-2 gap-3">
+      <div class="bg-slate-800/60 border border-slate-700/50 rounded-2xl p-4 flex flex-col items-center">
+        <i data-lucide="coins" class="w-6 h-6 text-emerald-400 mb-1"></i>
+        <span class="text-xs text-slate-400 font-bold">浮いたお金（通算）</span>
+        <div class="mt-1 flex items-baseline gap-0.5">
+          <span class="text-xs text-emerald-400">¥</span>
+          <span id="saved-money" class="text-xl font-black text-emerald-400">0</span>
+        </div>
+      </div>
+
+      <div class="bg-slate-800/60 border border-slate-700/50 rounded-2xl p-4 flex flex-col items-center">
+        <i data-lucide="heart-pulse" class="w-6 h-6 text-rose-400 mb-1"></i>
+        <span class="text-xs text-slate-400 font-bold">カットしたカロリー</span>
+        <div class="mt-1 flex items-baseline gap-0.5">
+          <span id="saved-cal" class="text-xl font-black text-rose-400">0</span>
+          <span class="text-xs text-rose-400">kcal</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- 今月のスタンプカード -->
+    <div class="bg-slate-800/60 border border-slate-700/50 rounded-2xl p-4">
+      <div class="flex justify-between items-center mb-3">
+        <div class="flex items-center gap-2">
+          <i data-lucide="stamp" class="w-5 h-5 text-amber-400"></i>
+          <h2 class="font-bold text-sm text-slate-200">今月の達成スタンプ</h2>
+        </div>
+        <span id="current-month-text" class="text-xs font-bold text-slate-400"></span>
+      </div>
+      <div id="stamp-grid" class="grid grid-cols-7 gap-1.5 text-center">
+        <!-- JSでスタンプグリッドを生成 -->
+      </div>
+    </div>
+
+    <!-- ご褒美ガチャ -->
+    <div class="bg-slate-800/60 border border-slate-700/50 rounded-2xl p-4">
+      <div class="flex justify-between items-center mb-2">
+        <div class="flex items-center gap-2">
+          <i data-lucide="gift" class="w-5 h-5 text-purple-400"></i>
+          <h2 class="font-bold text-sm text-slate-200">浮いたお金のご褒美ガチャ</h2>
+        </div>
+        <button onclick="rollReward()" class="text-xs bg-purple-600/30 hover:bg-purple-600/50 border border-purple-500/50 text-purple-300 font-bold px-2.5 py-1 rounded-lg">
+          引く！
+        </button>
+      </div>
+      <div id="reward-result" class="text-xs text-slate-300 bg-slate-900/60 p-3 rounded-xl border border-slate-800 min-h-[44px] flex items-center justify-center text-center">
+        ボタンを押して浮いたお金で買えるご褒美をチェック！
+      </div>
+    </div>
+
+    <!-- 達成バッジ図鑑 -->
+    <div class="bg-slate-800/60 border border-slate-700/50 rounded-2xl p-4">
+      <div class="flex items-center gap-2 mb-3">
+        <i data-lucide="trophy" class="w-5 h-5 text-yellow-400"></i>
+        <h2 class="font-bold text-sm text-slate-200">実績バッジ図鑑</h2>
+      </div>
+      <div id="badge-container" class="grid grid-cols-4 gap-2">
+        <!-- JSでバッジを生成 -->
+      </div>
+    </div>
+
+  </main>
+
+  <script>
+    // --- 定数＆設定 ---
+    const MONEY_PER_DAY = 500; // 1日あたりの平均お酒代（円）
+    const CAL_PER_DAY = 300;   // 1日あたりの平均カロリー（kcal）
+
+    const CHEER_MESSAGES = [
+      "肝臓がスタンディングオベーションしてるぞ！",
+      "最高の自分に一歩前進！かっこよすぎる！",
+      "意志の強さがダイヤモンド級！",
+      "明日覚醒した朝が待っている！",
+      "その調子！身体の細胞が歓喜の舞！",
+      "お酒なしで勝つ夜、最高にクールだ！",
+      "節約＆健康のダブルコンボ達成！"
+    ];
+
+    const REWARDS =
