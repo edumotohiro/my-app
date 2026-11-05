@@ -27,10 +27,10 @@
         
         .grid { display: grid; grid-template-columns: 1fr; gap: 1.5rem; }
         @media (min-width: 768px) {
-            .grid { grid-template-columns: 350px 1fr; }
+            .grid { grid-template-columns: 380px 1fr; }
         }
         
-        кард, .card { background: var(--card-bg); border-radius: 12px; padding: 1.25rem; box-shadow: 0 1px 3px rgba(0,0,0,0.1); margin-bottom: 1rem; }
+        .card { background: var(--card-bg); border-radius: 12px; padding: 1.25rem; box-shadow: 0 1px 3px rgba(0,0,0,0.1); margin-bottom: 1rem; }
         h2 { font-size: 1.125rem; margin-bottom: 1rem; padding-bottom: 0.5rem; border-bottom: 2px solid var(--border); display: flex; justify-content: space-between; align-items: center; }
         
         .form-group { margin-bottom: 0.875rem; }
@@ -57,59 +57,92 @@
         .badge { display: inline-block; padding: 0.125rem 0.375rem; font-size: 0.7rem; border-radius: 4px; background: #e2e8f0; color: var(--text); }
         .badge.even { background: #dcfce7; color: #166534; font-weight: bold; }
         
+        .btn-group { display: flex; gap: 0.5rem; margin-top: 1rem; }
         .btn { background: var(--primary); color: white; border: none; padding: 0.625rem 1rem; border-radius: 6px; font-weight: bold; cursor: pointer; width: 100%; font-size: 0.9375rem; }
         .btn:hover { opacity: 0.9; }
+        .btn-reset { background: #64748b; }
+        .btn-reset:hover { background: #475569; }
+
+        .sub-calc { font-size: 0.75rem; color: var(--text-light); margin-top: 0.2rem; }
     </style>
 </head>
 <body>
     <div class="container">
         <header>
-            <h1>育休・児童手当 統合シミュレーター</h1>
-            <p class="subtitle">4人のお子さま（9歳・6歳・3歳・1歳）の児童手当と育休手当のキャッシュフロー試算</p>
+            <h1>4人育児・育休＆児童手当シミュレーター</h1>
+            <p class="subtitle">ご提示いただいた固定費条件を初期値に反映・自動保存対応版</p>
         </header>
 
         <div class="grid">
             <!-- 設定サイドバー -->
             <div>
                 <div class="card">
-                    <h2>前提条件・収入</h2>
+                    <h2>基本情報・収入</h2>
                     <div class="form-group">
                         <label>初期貯金残高 (万円)</label>
-                        <input type="number" id="initSavings" value="300" step="10">
+                        <input type="number" id="initSavings" value="300" step="10" data-default="300">
                     </div>
                     <div class="form-group">
                         <label>休業前 額面月収 (万円)</label>
-                        <input type="number" id="baseSalary" value="48.3" step="0.1">
+                        <input type="number" id="baseSalary" value="60" step="0.5" data-default="60">
                     </div>
                 </div>
 
                 <div class="card">
-                    <h2>毎月の基本支出</h2>
+                    <h2>毎月の固定費・ローン等</h2>
                     <div class="form-group">
                         <label>住宅ローン / 家賃 (万円/月)</label>
-                        <input type="number" id="housingCost" value="12" step="0.5">
+                        <input type="number" id="housingCost" value="8.64" step="0.1" data-default="8.64">
                     </div>
                     <div class="form-group">
-                        <label>固定費（保険・通信費等） (万円/月)</label>
-                        <input type="number" id="fixedCost" value="5" step="0.5">
+                        <label>車ローン (万円/月)</label>
+                        <input type="number" id="carLoan" value="2.61" step="0.1" data-default="2.61">
+                    </div>
+                    <div class="form-group">
+                        <label>習い事合計（プール・ピアノ） (万円/月)</label>
+                        <input type="number" id="lessons" value="1.74" step="0.1" data-default="1.74">
+                    </div>
+                    <div class="form-group">
+                        <label>奨学金返済 (万円/月)</label>
+                        <input type="number" id="scholarship" value="2.05" step="0.1" data-default="2.05">
+                    </div>
+                    <div class="form-group">
+                        <label>新聞代合計（公明・聖教等） (万円/月)</label>
+                        <input type="number" id="newspaper" value="0.57" step="0.05" data-default="0.57">
+                    </div>
+                    <div class="form-group">
+                        <label>通信・光熱費合計（水道・ガス・電・スマ・ネ） (万円/月)</label>
+                        <input type="number" id="utilities" value="4.33" step="0.1" data-default="4.33">
                     </div>
                     <div class="form-group">
                         <label>変動費（食費・日用品等） (万円/月)</label>
-                        <input type="number" id="variableCost" value="12" step="0.5">
+                        <input type="number" id="variableCost" value="12" step="0.5" data-default="12">
                     </div>
                 </div>
 
                 <div class="card">
-                    <h2>特別支出（旅行・大きな出費等）</h2>
-                    <p class="subtitle" style="margin-bottom:0.5rem;">特定の月に上乗せしたい金額を入力できます</p>
+                    <h2>特別支出（保険・税金・旅行等）</h2>
                     <div class="form-group">
-                        <label>対象月 (例: 5月なら 2027-05)</label>
-                        <input type="month" id="eventMonth" value="2027-08">
+                        <label>4月支出 (生命保険: 5.1万円)</label>
+                        <input type="number" id="aprExpense" value="5.1" step="0.1" data-default="5.1">
                     </div>
                     <div class="form-group">
-                        <label>特別出費額 (万円)</label>
-                        <input type="number" id="eventAmount" value="30" step="1">
+                        <label>8月支出 (生命保険: 9.5万円)</label>
+                        <input type="number" id="augExpense" value="9.5" step="0.1" data-default="9.5">
                     </div>
+                    <div class="form-group">
+                        <label>11月支出 (車保険: 5.3万円)</label>
+                        <input type="number" id="novExpense" value="5.3" step="0.1" data-default="5.3">
+                    </div>
+                    <div class="form-group">
+                        <label>年一回固定費（固定資産税・アマプラ・NHK等 約16.6万円）の月割り or 任意月</label>
+                        <input type="number" id="annualTax" value="1.38" step="0.1" data-default="1.38">
+                        <div class="sub-calc">※毎月平均(約1.38万円/月)として積立換算しています</div>
+                    </div>
+                </div>
+
+                <div class="btn-group">
+                    <button class="btn btn-reset" onclick="resetToDefault()">初期値にリセット</button>
                 </div>
             </div>
 
@@ -161,30 +194,67 @@
     <script>
         let myChart = null;
 
+        // ローカルストレージからの読み込みと初期値設定
+        function loadValues() {
+            document.querySelectorAll('input[type="number"]').forEach(input => {
+                const saved = localStorage.getItem('sim_' + input.id);
+                if (saved !== null) {
+                    input.value = saved;
+                }
+            });
+        }
+
+        // 入力内容を自動保存
+        function saveValues() {
+            document.querySelectorAll('input[type="number"]').forEach(input => {
+                localStorage.setItem('sim_' + input.id, input.value);
+            });
+        }
+
+        // 初期値にリセット
+        function resetToDefault() {
+            if (confirm('すべての入力値を初期状態に戻しますか？')) {
+                document.querySelectorAll('input[type="number"]').forEach(input => {
+                    const defaultVal = input.getAttribute('data-default');
+                    input.value = defaultVal;
+                    localStorage.removeItem('sim_' + input.id);
+                });
+                calculate();
+            }
+        }
+
         function calculate() {
+            saveValues();
+
             const initSavings = parseFloat(document.getElementById('initSavings').value) || 0;
             const baseSalary = parseFloat(document.getElementById('baseSalary').value) || 0;
+            
+            // 毎月の固定費 + 変動費 + 年間費用の月割積立
             const housing = parseFloat(document.getElementById('housingCost').value) || 0;
-            const fixed = parseFloat(document.getElementById('fixedCost').value) || 0;
+            const carLoan = parseFloat(document.getElementById('carLoan').value) || 0;
+            const lessons = parseFloat(document.getElementById('lessons').value) || 0;
+            const scholarship = parseFloat(document.getElementById('scholarship').value) || 0;
+            const newspaper = parseFloat(document.getElementById('newspaper').value) || 0;
+            const utilities = parseFloat(document.getElementById('utilities').value) || 0;
             const variable = parseFloat(document.getElementById('variableCost').value) || 0;
-            const monthlyExpense = housing + fixed + variable;
+            const annualTaxMonthly = parseFloat(document.getElementById('annualTax').value) || 0;
 
-            const eventM = document.getElementById('eventMonth').value;
-            const eventAmt = parseFloat(document.getElementById('eventAmount').value) || 0;
+            const baseMonthlyExpense = housing + carLoan + lessons + scholarship + newspaper + utilities + variable + annualTaxMonthly;
 
-            // 育休給付金概算（1~6ヶ月目: 67%相当の手取り込み、7~12ヶ月目: 50%相当）
-            // 額面月収48.3万ベース：1~6月約32.4万、7~12月約24.2万
+            const aprExp = parseFloat(document.getElementById('aprExpense').value) || 0;
+            const augExp = parseFloat(document.getElementById('augExpense').value) || 0;
+            const novExp = parseFloat(document.getElementById('novExpense').value) || 0;
+
+            // 育休給付金概算（1~6ヶ月目: 67%相当、7~12ヶ月目: 50%相当）
             const getBenefit = (monthIndex) => {
-                const netMonthlySalaryEquivalent = baseSalary * 0.7; // 簡易目安
-                return monthIndex < 6 ? netMonthlySalaryEquivalent * (67/70) : netMonthlySalaryEquivalent * (50/70);
+                // 額面月収ベースから手取り相当への換算（育休中は社会保険料免除を考慮）
+                const netEquivalent = baseSalary * 0.7; 
+                return monthIndex < 6 ? netEquivalent * (67/70) : netEquivalent * (50/70);
             };
 
-            // 児童手当：4人分合計月額8万円（1万+1万+3万+3万）
-            const monthlyAllowanceAccrued = 8.0; 
+            const monthlyAllowanceAccrued = 8.0; // 4人分合計月額8万円
 
-            let currentSavings = initSavings;
             let totalYearlyIncome = 0;
-            
             const labels = [];
             const savingsData = [];
             const actualCashInbound = [];
@@ -197,21 +267,20 @@
             for (let i = 0; i < 12; i++) {
                 let year = 2027 + Math.floor((i + 3) / 12);
                 let month = ((i + 3) % 12) + 1;
-                let ymStr = `${year}-${String(month).padStart(2, '0')}`;
                 let displayYm = `${year}年${month}月`;
 
                 let benefit = getBenefit(i);
-                totalYearlyIncome += benefit + monthlyAllowanceAccrued;
+                let allowance = monthlyAllowanceAccrued;
+                totalYearlyIncome += benefit + allowance;
 
-                // 偶数月判定（4月, 6月, 8月, 10月, 12月, 2月）に前月分合わせた16万円が振り込まれるキャッシュフロー
-                // 4月は前年2-3月分のため厳密には変動するが、ここでは簡易的に偶数月に16万円が入るモデルにする
+                // 偶数月に児童手当（16万円＝2ヶ月分）が振り込まれるキャッシュフロー
                 let isEvenMonth = (month % 2 === 0);
-                let actualCashIn = benefit + (isEvenMonth ? 16.0 : 0); // 奇数月は手当なし（月換算で発生はしているが通帳には入らない）
+                let actualCashIn = benefit + (isEvenMonth ? 16.0 : 0);
 
-                let expense = monthlyExpense;
-                if (ymStr === eventM) {
-                    expense += eventAmt;
-                }
+                let expense = baseMonthlyExpense;
+                if (month === 4) expense += aprExp;
+                if (month === 8) expense += augExp;
+                if (month === 11) expense += novExp;
 
                 let monthlyBalance = actualCashIn - expense;
                 runningSavings += monthlyBalance;
@@ -227,7 +296,7 @@
                     <tr>
                         <td>${displayYm} ${badge}</td>
                         <td>${benefit.toFixed(1)}万</td>
-                        <td>${monthlyAllowanceAccrued.toFixed(1)}万</td>
+                        <td>${allowance.toFixed(1)}万</td>
                         <td><strong>${actualCashIn.toFixed(1)}万</strong></td>
                         <td>${expense.toFixed(1)}万</td>
                         <td style="color: ${monthlyBalance >= 0 ? 'var(--success)' : 'var(--danger)'}">${monthlyBalance >= 0 ? '+' : ''}${monthlyBalance.toFixed(1)}万</td>
@@ -303,12 +372,15 @@
             });
         }
 
-        // 入力値変更時にリアルタイム再計算
+        // 起動時に保存値をロード
+        loadValues();
+
+        // 入力値変更時に自動保存＆リアルタイム再計算
         document.querySelectorAll('input').forEach(input => {
             input.addEventListener('input', calculate);
         });
 
-        // 初期実行
+        // 初回実行
         calculate();
     </script>
 </body>
