@@ -1,0 +1,424 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>育休予算・食費安心ダッシュボード (2027-2028)</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        :root {
+            --primary: #4F46E5;
+            --primary-light: #EEF2FF;
+            --success: #10B981;
+            --warning: #F59E0B;
+            --danger: #EF4444;
+            --bg: #F8FAFC;
+            --card-bg: #FFFFFF;
+            --text-main: #0F172A;
+            --text-muted: #64748B;
+            --border: #E2E8F0;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+        }
+
+        body {
+            background-color: var(--bg);
+            color: var(--text-main);
+            padding: 16px;
+            max-width: 900px;
+            margin: 0 auto;
+        }
+
+        header {
+            background: linear-gradient(135deg, #4F46E5, #7C3AED);
+            color: white;
+            padding: 20px;
+            border-radius: 16px;
+            margin-bottom: 20px;
+            box-shadow: 0 4px 15px rgba(79, 70, 229, 0.2);
+        }
+
+        header h1 {
+            font-size: 1.4rem;
+            margin-bottom: 6px;
+        }
+
+        header p {
+            font-size: 0.85rem;
+            opacity: 0.9;
+        }
+
+        .card {
+            background: var(--card-bg);
+            border-radius: 16px;
+            padding: 20px;
+            margin-bottom: 20px;
+            border: 1px solid var(--border);
+            box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+        }
+
+        .card-title {
+            font-size: 1.1rem;
+            font-weight: 700;
+            margin-bottom: 16px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .grid-2 {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px;
+        }
+
+        @media (max-width: 600px) {
+            .grid-2 {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .metric-box {
+            background: var(--bg);
+            padding: 14px;
+            border-radius: 12px;
+            border: 1px solid var(--border);
+        }
+
+        .metric-label {
+            font-size: 0.75rem;
+            color: var(--text-muted);
+            margin-bottom: 4px;
+        }
+
+        .metric-val {
+            font-size: 1.3rem;
+            font-weight: 800;
+            color: var(--primary);
+        }
+
+        /* 進捗バー */
+        .progress-container {
+            margin-bottom: 16px;
+        }
+
+        .progress-header {
+            display: flex;
+            justify-content: space-between;
+            font-size: 0.85rem;
+            margin-bottom: 6px;
+        }
+
+        .progress-bar-bg {
+            height: 12px;
+            background: #E2E8F0;
+            border-radius: 6px;
+            overflow: hidden;
+            position: relative;
+        }
+
+        .progress-bar-fill {
+            height: 100%;
+            background: var(--primary);
+            border-radius: 6px;
+            transition: width 0.4s ease, background-color 0.4s ease;
+        }
+
+        .progress-bar-fill.warning { background: var(--warning); }
+        .progress-bar-fill.danger { background: var(--danger); }
+
+        /* 入力フォーム */
+        .input-group {
+            margin-bottom: 12px;
+        }
+
+        .input-group label {
+            display: block;
+            font-size: 0.8rem;
+            color: var(--text-muted);
+            margin-bottom: 4px;
+        }
+
+        .input-group input, .input-group select {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            font-size: 0.95rem;
+        }
+
+        .btn {
+            background: var(--primary);
+            color: white;
+            border: none;
+            padding: 12px;
+            border-radius: 8px;
+            font-weight: bold;
+            width: 100%;
+            cursor: pointer;
+            transition: opacity 0.2s;
+        }
+
+        .btn:hover {
+            opacity: 0.9;
+        }
+
+        /* ログリスト */
+        .log-list {
+            list-style: none;
+            max-height: 200px;
+            overflow-y: auto;
+        }
+
+        .log-item {
+            display: flex;
+            justify-content: space-between;
+            padding: 10px 0;
+            border-bottom: 1px solid var(--border);
+            font-size: 0.9rem;
+        }
+
+        .badge {
+            font-size: 0.7rem;
+            padding: 2px 8px;
+            border-radius: 12px;
+            background: var(--primary-light);
+            color: var(--primary);
+            font-weight: 600;
+        }
+
+        .badge.out { background: #FEF3C7; color: #D97706; }
+        .badge.daily { background: #E0E7FF; color: #3730A3; }
+    </style>
+</head>
+<body>
+
+    <header>
+        <h1>育休安心 予算・食費ダッシュボード</h1>
+        <p>対象年度：2027年4月 〜 2028年3月（前半67% / 後半50% 自動見通し）</p>
+    </header>
+
+    <!-- 年間給付見通し＆残額サマリー -->
+    <div class="card">
+        <div class="card-title">
+            <span>年度年間シミュレーション</span>
+            <span class="badge">2027-2028年度</span>
+        </div>
+        <div class="grid-2" style="margin-bottom: 16px;">
+            <div class="metric-box">
+                <div class="metric-label">毎月の食費＋日用品予算</div>
+                <div class="metric-val">¥120,000</div>
+            </div>
+            <div class="metric-box">
+                <div class="metric-label">給付率の変化時期</div>
+                <div class="metric-val" style="font-size: 1rem; color: var(--text-main); margin-top:4px;">
+                    10月〜 (67% ➔ 50%)
+                </div>
+            </div>
+        </div>
+        <div style="height: 180px; width: 100%;">
+            <canvas id="yearlyChart"></canvas>
+        </div>
+    </div>
+
+    <!-- 今月の進捗（ビジュアルバー） -->
+    <div class="card">
+        <div class="card-title">
+            <span>今月の予算進捗（12万円枠）</span>
+            <span id="monthName">4月</span>
+        </div>
+
+        <!-- 全体進捗 -->
+        <div class="progress-container">
+            <div class="progress-header">
+                <span>月間合計使用額</span>
+                <span id="monthTotalText">¥0 / ¥120,000</span>
+            </div>
+            <div class="progress-bar-bg">
+                <div class="progress-bar-fill" id="monthProgressBar" style="width: 0%;"></div>
+            </div>
+        </div>
+
+        <!-- 週別ブレイクダウンバー -->
+        <div class="grid-2" style="margin-top: 16px;">
+            <div class="progress-container">
+                <div class="progress-header">
+                    <span>今週の自炊食費（目安¥18,000）</span>
+                    <span id="weekFoodText">¥0</span>
+                </div>
+                <div class="progress-bar-bg">
+                    <div class="progress-bar-fill" id="weekFoodBar" style="width: 0%;"></div>
+                </div>
+            </div>
+            <div class="progress-container">
+                <div class="progress-header">
+                    <span>今週の外食・テイクアウト（目安¥5,000）</span>
+                    <span id="weekOutText">¥0</span>
+                </div>
+                <div class="progress-bar-bg">
+                    <div class="progress-bar-fill" id="weekOutBar" style="width: 0%; background-color: var(--warning);"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 支出クイック入力 -->
+    <div class="card">
+        <div class="card-title">支出を記録する</div>
+        <form id="expenseForm">
+            <div class="grid-2">
+                <div class="input-group">
+                    <label>カテゴリ</label>
+                    <select id="category">
+                        <option value="food">自炊食費</option>
+                        <option value="out">外食・テイクアウト</option>
+                        <option value="daily">日用品</option>
+                    </select>
+                </div>
+                <div class="input-group">
+                    <label>金額 (円)</label>
+                    <input type="number" id="amount" placeholder="例: 3500" required>
+                </div>
+            </div>
+            <button type="submit" class="btn">記録を追加</button>
+        </form>
+    </div>
+
+    <!-- 履歴 -->
+    <div class="card">
+        <div class="card-title">最近の支出履歴</div>
+        <ul class="log-list" id="logList">
+            <li style="text-align: center; color: var(--text-muted); padding: 12px;">まだ記録がありません</li>
+        </ul>
+    </div>
+
+    <script>
+        // データ状態
+        let expenses = JSON.parse(localStorage.getItem('ikukyu_expenses_2027')) || [];
+
+        // グラフ初期化
+        const ctx = document.getElementById('yearlyChart').getContext('2d');
+        const yearlyChart = new Chart(ctx, {
+            type: 'line',
+            data: {
+                labels: ['4月','5月','6月','7月','8月','9月','10月','11月','12月','1月','2月','3月'],
+                datasets: [
+                    {
+                        label: '給付推計率 (%)',
+                        data: [67, 67, 67, 67, 67, 67, 50, 50, 50, 50, 50, 50],
+                        borderColor: '#4F46E5',
+                        backgroundColor: 'rgba(79, 70, 229, 0.1)',
+                        fill: true,
+                        yAxisID: 'y1',
+                        tension: 0.2
+                    },
+                    {
+                        label: '生活費上限（固定12万円）',
+                        data: Array(12).fill(120),
+                        borderColor: '#10B981',
+                        borderDash: [5, 5],
+                        fill: false,
+                        yAxisID: 'y2'
+                    }
+                ]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                scales: {
+                    y1: {
+                        type: 'linear',
+                        position: 'left',
+                        min: 0,
+                        max: 100,
+                        ticks: { callback: v => v + '%' }
+                    },
+                    y2: {
+                        type: 'linear',
+                        position: 'right',
+                        min: 0,
+                        max: 200,
+                        ticks: { callback: v => v + '千円' },
+                        grid: { drawOnChartArea: false }
+                    }
+                },
+                plugins: {
+                    legend: { position: 'bottom' }
+                }
+            }
+        });
+
+        // UI更新
+        function updateUI() {
+            const monthTotal = expenses.reduce((sum, item) => sum + item.amount, 0);
+            const monthMax = 120000;
+            const monthPct = Math.min(100, Math.round((monthTotal / monthMax) * 100));
+
+            // 月合計進捗
+            document.getElementById('monthTotalText').innerText = `¥${monthTotal.toLocaleString()} / ¥${monthMax.toLocaleString()}`;
+            const monthBar = document.getElementById('monthProgressBar');
+            monthBar.style.width = `${monthPct}%`;
+            monthBar.className = 'progress-bar-fill' + (monthPct > 90 ? ' danger' : monthPct > 75 ? ' warning' : '');
+
+            // カテゴリ別集計
+            const foodTotal = expenses.filter(i => i.category === 'food').reduce((s, i) => s + i.amount, 0);
+            const outTotal = expenses.filter(i => i.category === 'out').reduce((s, i) => s + i.amount, 0);
+
+            // 週目安 (1ヶ月4.3週想定)
+            const weekFoodMax = 18000;
+            const weekOutMax = 5000;
+
+            document.getElementById('weekFoodText').innerText = `¥${foodTotal.toLocaleString()} / ¥${weekFoodMax.toLocaleString()}`;
+            document.getElementById('weekFoodBar').style.width = `${Math.min(100, (foodTotal / weekFoodMax) * 100)}%`;
+
+            document.getElementById('weekOutText').innerText = `¥${outTotal.toLocaleString()} / ¥${weekOutMax.toLocaleString()}`;
+            document.getElementById('weekOutBar').style.width = `${Math.min(100, (outTotal / weekOutMax) * 100)}%`;
+
+            // 履歴リスト
+            const logList = document.getElementById('logList');
+            if (expenses.length === 0) {
+                logList.innerHTML = '<li style="text-align: center; color: var(--text-muted); padding: 12px;">まだ記録がありません</li>';
+            } else {
+                logList.innerHTML = expenses.slice().reverse().map(item => {
+                    const catMap = { food: ['自炊食費', ''], out: ['外食', 'out'], daily: ['日用品', 'daily'] };
+                    const info = catMap[item.category];
+                    return `
+                        <li class="log-item">
+                            <div>
+                                <span class="badge ${info[1]}">${info[0]}</span>
+                                <span style="margin-left:8px; font-size:0.8rem; color:#64748B;">${item.date}</span>
+                            </div>
+                            <strong style="color: var(--text-main);">¥${item.amount.toLocaleString()}</strong>
+                        </li>
+                    `;
+                }).join('');
+            }
+
+            localStorage.setItem('ikukyu_expenses_2027', JSON.stringify(expenses));
+        }
+
+        // フォーム送信
+        document.getElementById('expenseForm').addEventListener('submit', (e) => {
+            e.preventDefault();
+            const category = document.getElementById('category').value;
+            const amount = parseInt(document.getElementById('amount').value, 10);
+
+            if (amount > 0) {
+                const now = new Date();
+                const dateStr = `${now.getMonth() + 1}/${now.getDate()} ${now.getHours()}:${String(now.getMinutes()).padStart(2, '0')}`;
+                expenses.push({ category, amount, date: dateStr });
+                document.getElementById('amount').value = '';
+                updateUI();
+            }
+        });
+
+        // 初回描画
+        updateUI();
+    </script>
+</body>
+</html>
