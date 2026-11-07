@@ -1,0 +1,360 @@
+
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>育休家計シミュレーター</title>
+<style>
+:root{--bg:#f4f6f9;--card:#fff;--text:#253247;--muted:#718096;--blue:#3975c6;--red:#d9534f;--green:#26966b;--line:#e4e9f0}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSystemFont,"Noto Sans JP",sans-serif}
+header{background:#243b58;color:white;padding:22px 16px}
+header h1{font-size:21px;margin:0 0 5px}
+header p{font-size:12px;color:#d4dfed;margin:0}
+main{max-width:1100px;margin:auto;padding:15px}
+nav{display:flex;gap:7px;overflow:auto;margin-bottom:16px}
+nav button{white-space:nowrap;border:0;border-radius:9px;padding:11px 15px;background:#e3eaf3;color:#34465e;font-weight:bold}
+nav button.active{background:var(--blue);color:white}
+.panel{display:none}
+.panel.active{display:block}
+.card{background:white;border-radius:13px;padding:16px;margin-bottom:13px;box-shadow:0 2px 8px #172b4d0b}
+h2{font-size:18px;margin:0 0 13px}
+h3{font-size:15px;margin:18px 0 8px}
+.grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
+.metric{background:#f3f6fa;padding:14px;border-radius:10px}
+.metric small{color:var(--muted)}
+.metric strong{display:block;font-size:23px;margin-top:5px}
+.green{color:var(--green)}.red{color:var(--red)}
+input,select{font:inherit;padding:8px;border:1px solid #d9e0e9;border-radius:7px;width:100%;min-width:0;background:white}
+input[type=number]{text-align:right}
+label{font-size:12px;color:var(--muted);display:block;margin-bottom:5px}
+.field{margin-bottom:12px}
+button{cursor:pointer}
+.action{border:0;background:var(--blue);color:white;border-radius:8px;padding:9px 13px;font-weight:bold}
+.secondary{border:1px solid #d9e0e9;background:white;border-radius:8px;padding:8px 12px}
+.danger{color:var(--red);border:1px solid #edc9c9;background:white;border-radius:7px;padding:6px 9px}
+.small{font-size:12px;color:var(--muted);line-height:1.6}
+.table-wrap{overflow-x:auto}
+table{border-collapse:collapse;width:100%;font-size:12px;white-space:nowrap}
+th,td{border-bottom:1px solid var(--line);padding:7px 5px;text-align:right}
+th:first-child,td:first-child{text-align:left}
+th{color:var(--muted);background:#f8fafc}
+td input{width:90px}
+td:first-child input{width:140px}
+.status{font-size:11px;padding:3px 6px;border-radius:5px;background:#fff3d9;color:#946b1c}
+.status.confirmed{background:#e2f5eb;color:#23784e}
+.status.unknown{background:#fce8e8;color:#a33}
+.bar{height:18px;background:#edf1f6;border-radius:5px;overflow:hidden;margin:5px 0}
+.bar span{display:block;height:100%;background:#4d89d1}
+.month-row{display:grid;grid-template-columns:48px 1fr 90px;gap:8px;align-items:center;font-size:12px;margin:11px 0}
+canvas{width:100%;height:260px}
+footer{text-align:center;color:var(--muted);font-size:11px;padding:20px}
+@media(min-width:700px){.grid{grid-template-columns:repeat(4,minmax(0,1fr))}}
+</style>
+</head>
+<body>
+<header>
+<h1>育休家計シミュレーター</h1>
+<p>2027年4月〜2028年3月｜収入・固定費・変動費・貯蓄管理</p>
+</header>
+<main>
+<nav>
+<button class="active" data-tab="dashboard">全体</button>
+<button data-tab="income">収入</button>
+<button data-tab="fixed">固定費</button>
+<button data-tab="variable">変動費</button>
+<button data-tab="settings">設定・保存</button>
+</nav>
+
+<section id="dashboard" class="panel active">
+<div class="card">
+<h2>年間家計の見通し</h2>
+<div class="grid">
+<div class="metric"><small>年間収入</small><strong id="totalIncome">-</strong></div>
+<div class="metric"><small>年間支出</small><strong id="totalExpense">-</strong></div>
+<div class="metric"><small>年間収支</small><strong id="balance">-</strong></div>
+<div class="metric"><small>期末貯蓄見込み</small><strong id="endSavings">-</strong></div>
+</div>
+<p class="small" id="summaryNote"></p>
+</div>
+<div class="card">
+<h2>月別収支</h2>
+<div id="monthly"></div>
+</div>
+<div class="card">
+<h2>貯蓄残高の推移</h2>
+<canvas id="chart"></canvas>
+<p class="small">期首貯蓄残高を設定すると表示されます。月ごとの収支を反映した試算です。</p>
+</div>
+<div class="card">
+<h2>年間支出の内訳</h2>
+<div id="breakdown"></div>
+</div>
+<div class="card">
+<h2>確認が必要な項目</h2>
+<div id="warnings" class="small"></div>
+</div>
+</section>
+
+<section id="income" class="panel">
+<div class="card">
+<h2>収入の管理</h2>
+<p class="small">金額は入金される月に入力します。給付金は対象月と入金月が異なるため注意してください。</p>
+<div id="incomeTable" class="table-wrap"></div>
+<button class="action" onclick="addItem('income')">＋ 収入項目を追加</button>
+</div>
+</section>
+
+<section id="fixed" class="panel">
+<div class="card">
+<h2>固定費の管理</h2>
+<p class="small">固定費でも毎月の金額を変更できます。年払いは実際の支払月に入力するか、月割り積立として設定してください。</p>
+<div id="fixedTable" class="table-wrap"></div>
+<button class="action" onclick="addItem('fixed')">＋ 固定費を追加</button>
+</div>
+</section>
+
+<section id="variable" class="panel">
+<div class="card">
+<h2>変動費の管理</h2>
+<p class="small">食費・日用品などの予算を入力します。旅行や特別費も追加できます。</p>
+<div id="variableTable" class="table-wrap"></div>
+<button class="action" onclick="addItem('variable')">＋ 変動費を追加</button>
+</div>
+</section>
+
+<section id="settings" class="panel">
+<div class="card">
+<h2>基本設定</h2>
+<div class="field">
+<label>2027年4月時点の貯蓄残高（円）</label>
+<input id="savings" type="number" min="0" placeholder="金額を入力">
+</div>
+<div class="field">
+<label>貯蓄残高の入力状態</label>
+<select id="savingsStatus">
+<option>未確認</option><option>仮設定</option><option>確認済み</option>
+</select>
+</div>
+<p class="small">現在の預貯金残高と育休開始時の残高は異なる場合があります。2027年4月の開始残高を入力してください。</p>
+</div>
+<div class="card">
+<h2>データの保存・バックアップ</h2>
+<p class="small">入力内容はこのブラウザ内に自動保存されます。端末やブラウザを変更すると自動では引き継がれません。</p>
+<button class="action" onclick="backup()">データをバックアップ</button>
+<button class="secondary" onclick="document.getElementById('restoreFile').click()">バックアップから復元</button>
+<input type="file" id="restoreFile" accept=".json" hidden onchange="restore(event)">
+<button class="danger" onclick="resetData()">初期データに戻す</button>
+</div>
+</section>
+</main>
+<footer>育休家計シミュレーター 初版｜入力データは端末内に保存</footer>
+
+<script>
+const months=["4月","5月","6月","7月","8月","9月","10月","11月","12月","1月","2月","3月"];
+const N=12;
+const arr=(v=0)=>Array(N).fill(v);
+const month=(obj)=>{let a=arr();Object.entries(obj).forEach(([k,v])=>a[Number(k)-1]=v);return a};
+
+function item(name,values,status="仮設定",note=""){
+ return {id:crypto.randomUUID(),name,values,status,note};
+}
+
+function initial(){
+return {
+savings:"",
+savingsStatus:"未確認",
+income:[
+item("育児休業手当（67%・初回は5月入金）",month({2:275000,3:275000,4:275000,5:275000,6:275000,7:275000}),"仮設定","対象月の翌月入金。前半6か月の概算"),
+item("育児休業手当（50%）",month({8:196000,9:196000,10:196000,11:196000,12:196000}),"仮設定","延長が認められる場合の1〜3月分も仮置き"),
+item("児童手当（第4子誕生後）",arr(80000),"仮設定","月額換算。実際の振込月は別途確認"),
+item("東京都018サポート",arr(20000),"未確認","2027年度継続・支給時期未確認。月額換算"),
+item("2027年6月賞与",month({3:475000}),"仮設定","手取り40〜55万円の中間値"),
+item("年末調整等",month({9:200000}),"未確認","過去の入金実績を参考に仮置き。2027年は未確認")
+],
+fixed:[
+item("住宅ローン",arr(86370),"確認済み","金利変更後の返済額は要確認"),
+item("車ローン",arr(26130),"確認済み",""),
+item("奨学金返済",arr(20507),"確認済み","猶予はまだ反映していない"),
+item("プール",arr(9350),"確認済み",""),
+item("ピアノ",arr(8000),"確認済み",""),
+item("新聞・オンライン購読",arr(5666),"仮設定",""),
+item("水道",arr(15000),"仮設定","月ごとに変更可能"),
+item("ガス",arr(10000),"仮設定","月ごとに変更可能"),
+item("スマホ",arr(5000),"仮設定",""),
+item("インターネット",arr(6275),"確認済み",""),
+item("電気代",arr(220000/12),"仮設定","年間22万円を月割り。季節ごとに編集可能"),
+item("生命保険（4月）",month({1:51190}),"確認済み",""),
+item("生命保険（8月）",month({5:94881}),"確認済み",""),
+item("車保険（11月）",month({8:52560}),"確認済み",""),
+item("固定資産税（月割り積立）",arr(147400/12),"未確認","納付月未確認のため月割りで仮置き"),
+item("Amazonプライム（月割り積立）",arr(5900/12),"仮設定","年払い月未確認"),
+item("NHK（月割り積立）",arr(12276/12),"仮設定","年払い月未確認"),
+item("住民税（4〜5月）",month({1:7300,2:7300}),"仮設定","2025年所得基準"),
+item("住民税（6月以降）",month({3:13500,4:13500,5:13500,6:13500,7:13500,8:13500,9:13500,10:13500,11:13500,12:13500}),"未確認","月7000〜20000円の仮置き中間値")
+],
+variable:[
+item("食費",arr(120000),"仮設定","外食を含むか未決定"),
+item("日用品",arr(20000),"仮設定",""),
+item("外食・テイクアウト",arr(0),"未確認","食費に含めるか検討"),
+item("乳幼児用品",arr(0),"未確認","おむつ・ミルクなど"),
+item("旅行・帰省",arr(0),"未確認","芦屋・水戸など"),
+item("結婚10周年・特別費",arr(0),"未確認","2027年度の特別予算")
+]
+};
+}
+
+let data;
+try{data=JSON.parse(localStorage.getItem("ikukyu_household_v1"))||initial()}catch(e){data=initial()}
+
+function save(){
+localStorage.setItem("ikukyu_household_v1",JSON.stringify(data));
+render();
+}
+function yen(n){return Math.round(n).toLocaleString("ja-JP")+"円"}
+function sum(a){return a.reduce((x,y)=>x+(Number(y)||0),0)}
+function total(list,m){return list.reduce((s,x)=>s+(Number(x.values[m])||0),0)}
+function totals(list){return months.map((_,i)=>total(list,i))}
+function esc(s){return String(s).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]))}
+
+document.querySelectorAll("nav button").forEach(b=>b.onclick=()=>{
+document.querySelectorAll("nav button,.panel").forEach(x=>x.classList.remove("active"));
+b.classList.add("active");document.getElementById(b.dataset.tab).classList.add("active");
+});
+
+function tableHTML(type){
+let list=data[type];
+let html='<table><thead><tr><th>項目・状態</th>';
+months.forEach(m=>html+=`<th>${m}</th>`);
+html+='<th>年間合計</th><th>削除</th></tr></thead><tbody>';
+list.forEach(x=>{
+html+=`<tr><td>
+<input data-id="${x.id}" data-field="name" value="${esc(x.name)}">
+<select data-id="${x.id}" data-field="status">
+${["確認済み","仮設定","未確認"].map(s=>`<option ${x.status===s?"selected":""}>${s}</option>`).join("")}
+</select>
+<input data-id="${x.id}" data-field="note" value="${esc(x.note||"")}" placeholder="メモ">
+</td>`;
+x.values.forEach((v,i)=>html+=`<td><input type="number" min="0" step="1" data-id="${x.id}" data-month="${i}" value="${Math.round(Number(v)||0)}"></td>`);
+html+=`<td>${yen(sum(x.values))}</td><td><button class="danger" data-delete="${x.id}" data-type="${type}">×</button></td></tr>`;
+});
+html+='</tbody></table>';
+return html;
+}
+
+function bindTable(type,element){
+element.innerHTML=tableHTML(type);
+element.querySelectorAll("[data-id]").forEach(input=>{
+input.onchange=()=>{
+let x=data[type].find(a=>a.id===input.dataset.id);if(!x)return;
+if(input.dataset.month!==undefined)x.values[Number(input.dataset.month)]=Math.max(0,Number(input.value)||0);
+else x[input.dataset.field]=input.value;
+save();
+};
+});
+element.querySelectorAll("[data-delete]").forEach(b=>b.onclick=()=>{
+if(confirm("この項目を削除しますか？")){
+data[type]=data[type].filter(x=>x.id!==b.dataset.delete);save();
+}
+});
+}
+
+function addItem(type){
+let name=prompt("追加する項目名を入力してください");if(!name)return;
+data[type].push(item(name,arr(0),"仮設定","新規追加"));
+save();
+}
+
+function render(){
+bindTable("income",document.getElementById("incomeTable"));
+bindTable("fixed",document.getElementById("fixedTable"));
+bindTable("variable",document.getElementById("variableTable"));
+
+let inc=totals(data.income),fix=totals(data.fixed),vari=totals(data.variable);
+let net=months.map((_,i)=>inc[i]-fix[i]-vari[i]);
+let ti=sum(inc),te=sum(fix)+sum(vari),bal=ti-te;
+let savings=Number(data.savings);
+document.getElementById("totalIncome").textContent=yen(ti);
+document.getElementById("totalExpense").textContent=yen(te);
+let be=document.getElementById("balance");
+be.textContent=(bal>=0?"+":"")+yen(bal);
+be.className=bal>=0?"green":"red";
+document.getElementById("endSavings").textContent=data.savings===""?"未入力":yen(savings+bal);
+document.getElementById("summaryNote").textContent=
+`固定費 ${yen(sum(fix))} ／ 変動費 ${yen(sum(vari))} ／ 月平均収支 ${yen(bal/12)}。金額は現在の仮設定を含みます。`;
+
+let html="";
+let running=savings;
+net.forEach((v,i)=>{
+running+=v;
+html+=`<div class="month-row">
+<b>${months[i]}</b>
+<div><div class="bar"><span style="width:${Math.min(100,Math.abs(v)/Math.max(1,...net.map(Math.abs))*100)}%;background:${v>=0?"#26966b":"#d9534f"}"></span></div>
+<span class="${v>=0?"green":"red"}">${v>=0?"+":""}${yen(v)}</span></div>
+<b>${data.savings===""?"-":yen(running)}</b></div>`;
+});
+document.getElementById("monthly").innerHTML=html;
+
+document.getElementById("breakdown").innerHTML=
+`<p>固定費：${yen(sum(fix))}（${(sum(fix)/Math.max(1,te)*100).toFixed(1)}%）</p>
+<div class="bar"><span style="width:${sum(fix)/Math.max(1,te)*100}%"></span></div>
+<p>変動費：${yen(sum(vari))}（${(sum(vari)/Math.max(1,te)*100).toFixed(1)}%）</p>
+<div class="bar"><span style="width:${sum(vari)/Math.max(1,te)*100}%;background:#e3a94b"></span></div>`;
+
+let warnings=[];
+[...data.income,...data.fixed,...data.variable].filter(x=>x.status!=="確認済み").forEach(x=>warnings.push(`${esc(x.name)}：${x.status}`));
+warnings.push("018サポートの2027年度継続・支給時期");
+warnings.push("児童手当の実際の振込月");
+warnings.push("固定資産税・年払い保険等の実際の支払月");
+warnings.push("固定費の個別積み上げ額と年間メモの差額14万4000円");
+warnings.push("育休手当の延長要件と2028年1〜3月分");
+document.getElementById("warnings").innerHTML=[...new Set(warnings)].map(x=>"・"+x).join("<br>");
+
+drawChart(net,savings,data.savings!=="");
+document.getElementById("savings").value=data.savings;
+document.getElementById("savingsStatus").value=data.savingsStatus;
+}
+
+function drawChart(net,start,valid){
+let c=document.getElementById("chart"),ctx=c.getContext("2d");
+let w=c.clientWidth,h=260,dpr=window.devicePixelRatio||1;
+c.width=w*dpr;c.height=h*dpr;ctx.scale(dpr,dpr);
+ctx.clearRect(0,0,w,h);
+if(!valid){ctx.fillStyle="#718096";ctx.font="14px sans-serif";ctx.fillText("設定画面で期首貯蓄残高を入力してください",12,35);return}
+let vals=[],v=start;net.forEach(x=>{v+=x;vals.push(v)});
+let min=Math.min(0,...vals),max=Math.max(1,...vals),pad=35;
+let y=n=>h-pad-(n-min)/(max-min)*(h-pad*2);
+ctx.strokeStyle="#e4e9f0";ctx.beginPath();ctx.moveTo(pad,y(0));ctx.lineTo(w-10,y(0));ctx.stroke();
+ctx.strokeStyle="#3975c6";ctx.lineWidth=3;ctx.beginPath();
+vals.forEach((n,i)=>{let x=pad+i*(w-pad-15)/(N-1);if(i===0)ctx.moveTo(x,y(n));else ctx.lineTo(x,y(n))});
+ctx.stroke();
+vals.forEach((n,i)=>{let x=pad+i*(w-pad-15)/(N-1);ctx.fillStyle="#3975c6";ctx.beginPath();ctx.arc(x,y(n),3,0,Math.PI*2);ctx.fill();ctx.fillStyle="#718096";ctx.font="10px sans-serif";ctx.fillText(months[i],x-8,h-8)});
+}
+
+document.getElementById("savings").onchange=e=>{data.savings=e.target.value;save()};
+document.getElementById("savingsStatus").onchange=e=>{data.savingsStatus=e.target.value;save()};
+
+function backup(){
+let blob=new Blob([JSON.stringify(data,null,2)],{type:"application/json"});
+let a=document.createElement("a");a.href=URL.createObjectURL(blob);a.download="育休家計バックアップ.json";a.click();URL.revokeObjectURL(a.href);
+}
+function restore(e){
+let file=e.target.files[0];if(!file)return;
+let r=new FileReader();r.onload=()=>{
+try{let d=JSON.parse(r.result);
+if(!d.income||!d.fixed||!d.variable)throw Error();
+data=d;save();alert("復元しました");
+}catch(err){alert("読み込めないファイルです")}
+};r.readAsText(file);
+}
+function resetData(){
+if(confirm("入力内容をすべて初期状態に戻します。バックアップは取りましたか？")){
+data=initial();save();
+}
+}
+window.addEventListener("resize",()=>render());
+render();
+</script>
+</body>
+</html>
