@@ -1,0 +1,2113 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>お手伝いモンスターズ！進化＆図鑑コレクション</title>
+  <!-- Tailwind CSS -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- 丸ゴシック系フォント -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=M+PLUS+Rounded+1c:wght@500;700;800;900&display=swap" rel="stylesheet">
+  <style>
+    * {
+      box-sizing: border-box;
+      -webkit-tap-highlight-color: transparent;
+      user-select: none;
+    }
+
+    body {
+      font-family: 'M PLUS Rounded 1c', sans-serif;
+      background-color: #e0f2fe;
+      background-image: radial-gradient(#bae6fd 2.5px, transparent 2.5px);
+      background-size: 26px 26px;
+      color: #1e293b;
+      padding-bottom: 92px;
+      overflow-x: hidden;
+    }
+
+    ruby rt {
+      font-size: 0.62em;
+      font-weight: 700;
+      color: #475569;
+    }
+
+    /* ゲーム風立体ボーダー＆シャドウ */
+    .game-box {
+      border: 3.5px solid #1e293b;
+      box-shadow: 0 5px 0 #1e293b;
+    }
+    .game-box-lg {
+      border: 4px solid #1e293b;
+      box-shadow: 0 7px 0 #1e293b;
+    }
+    .game-btn {
+      border: 3px solid #1e293b;
+      box-shadow: 0 4px 0 #1e293b;
+      transition: transform 0.08s ease, box-shadow 0.08s ease;
+    }
+    .game-btn:active:not(:disabled) {
+      transform: translateY(3px);
+      box-shadow: 0 1px 0 #1e293b;
+    }
+    .game-btn:disabled {
+      opacity: 0.55;
+      box-shadow: none;
+      transform: translateY(2px);
+      cursor: not-allowed;
+    }
+
+    /* モンスター浮遊・ジャンプアニメーション */
+    @keyframes monsterFloat {
+      0%, 100% { transform: translateY(0) scale(1); }
+      50% { transform: translateY(-8px) scale(1.03); }
+    }
+    .monster-float {
+      animation: monsterFloat 2.6s ease-in-out infinite;
+    }
+
+    @keyframes monsterJump {
+      0% { transform: scale(1); }
+      25% { transform: scale(1.22, 0.82) translateY(8px); }
+      55% { transform: scale(0.9, 1.15) translateY(-24px); }
+      100% { transform: scale(1) translateY(0); }
+    }
+    .monster-jump {
+      animation: monsterJump 0.5s ease !important;
+    }
+
+    @keyframes spinSlow {
+      from { transform: rotate(0deg); }
+      to { transform: rotate(360deg); }
+    }
+    .aura-spin {
+      animation: spinSlow 16s linear infinite;
+    }
+
+    /* フローティングポイント */
+    .floating-pt {
+      position: fixed;
+      pointer-events: none;
+      font-size: 1.5rem;
+      font-weight: 900;
+      color: #f97316;
+      text-shadow: 2px 2px 0 #fff, -2px -2px 0 #fff, 2px -2px 0 #fff, -2px 2px 0 #fff;
+      z-index: 250;
+      animation: floatUpFade 1s ease-out forwards;
+    }
+    @keyframes floatUpFade {
+      0% { opacity: 1; transform: translateY(0) scale(0.85); }
+      40% { opacity: 1; transform: translateY(-32px) scale(1.2); }
+      100% { opacity: 0; transform: translateY(-75px) scale(1); }
+    }
+
+    /* チケット模様 */
+    .ticket-pattern {
+      background: repeating-linear-gradient(
+        45deg,
+        #fef08a,
+        #fef08a 12px,
+        #fde047 12px,
+        #fde047 24px
+      );
+    }
+
+    /* モーダル背景 */
+    .modal-backdrop {
+      background: rgba(15, 23, 42, 0.72);
+      backdrop-filter: blur(3px);
+    }
+
+    /* スクロールバー非表示（横スクロール等） */
+    .no-scrollbar::-webkit-scrollbar {
+      display: none;
+    }
+  </style>
+</head>
+<body class="min-h-screen">
+
+  <!-- 紙吹雪用キャンバス -->
+  <canvas id="confetti-canvas" class="fixed inset-0 pointer-events-none z-[300]"></canvas>
+
+  <!-- トースト通知 -->
+  <div id="toast" class="fixed top-20 left-1/2 -translate-x-1/2 -translate-y-6 bg-slate-900 text-white px-5 py-2.5 rounded-full font-extrabold text-sm z-[260] opacity-0 pointer-events-none transition-all duration-200 shadow-lg whitespace-nowrap"></div>
+
+  <!-- ヘッダー -->
+  <header class="sticky top-0 z-40 bg-gradient-to-r from-red-600 via-red-500 to-orange-500 text-white border-b-4 border-slate-900 shadow-md px-3 pt-2.5 pb-3">
+    <div class="max-w-2xl mx-auto">
+      <div class="flex items-center justify-between mb-2">
+        <div class="flex items-center gap-2">
+          <span class="text-2xl drop-shadow">🔴</span>
+          <h1 class="text-lg sm:text-xl font-black tracking-tight drop-shadow-[0_2px_0_rgba(127,29,29,1)]">
+            お<ruby>手伝<rt>てつだ</rt></ruby>いモンスターズ
+          </h1>
+          <span id="cycle-badge" class="bg-yellow-300 text-slate-900 text-xs font-black px-2.5 py-0.5 rounded-full border-2 border-slate-900 shadow-sm">
+            1しゅうめ
+          </span>
+        </div>
+        <div class="flex items-center gap-2">
+          <button id="sound-toggle-btn" class="w-9 h-9 rounded-full bg-white/20 border-2 border-white/70 flex items-center justify-center text-base active:scale-90 transition" title="おとのオン・オフ">🔊</button>
+          <button id="open-settings-btn" class="w-9 h-9 rounded-full bg-white/20 border-2 border-white/70 flex items-center justify-center text-base active:scale-90 transition" title="おうちのひとせってい">⚙️</button>
+        </div>
+      </div>
+
+      <!-- ポイントバー -->
+      <div class="grid grid-cols-2 gap-2.5">
+        <div class="bg-white text-slate-900 rounded-2xl px-3 py-1.5 border-[3px] border-slate-900 shadow-[0_3px_0_#0f172a] flex flex-col items-center">
+          <span class="text-[11px] sm:text-xs font-extrabold text-slate-600">💰 つかえるポイント</span>
+          <div class="text-xl sm:text-2xl font-black text-orange-600 leading-tight">
+            <span id="usable-points">0</span><span class="text-xs ml-0.5">pt</span>
+          </div>
+        </div>
+        <div class="bg-white text-slate-900 rounded-2xl px-3 py-1.5 border-[3px] border-slate-900 shadow-[0_3px_0_#0f172a] flex flex-col items-center">
+          <span class="text-[11px] sm:text-xs font-extrabold text-slate-600">⭐ るいけいポイント</span>
+          <div class="text-xl sm:text-2xl font-black text-blue-600 leading-tight">
+            <span id="total-points">0</span><span class="text-xs ml-0.5">pt</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <!-- メインコンテンツ -->
+  <main class="max-w-2xl mx-auto p-3 sm:p-4">
+
+    <!-- 相棒モンスター育成ステージ -->
+    <section id="monster-stage-card" class="game-box-lg rounded-3xl p-4 mb-5 bg-gradient-to-b from-amber-100 via-white to-sky-100 relative overflow-hidden">
+      <!-- 上部バッジ行 -->
+      <div class="flex flex-wrap items-center justify-between gap-2 mb-2 relative z-10">
+        <div class="flex items-center gap-1.5">
+          <span id="monster-level-badge" class="bg-slate-900 text-yellow-300 text-xs sm:text-sm font-black px-3 py-1 rounded-full">
+            Lv.1 / 10
+          </span>
+          <span id="monster-type-badge" class="bg-orange-500 text-white text-xs font-black px-2.5 py-1 rounded-full border-2 border-slate-900">
+            🔥 ほのお
+          </span>
+        </div>
+        <span id="monster-route-badge" class="bg-white/90 text-slate-800 text-xs font-extrabold px-2.5 py-1 rounded-full border-2 border-slate-900">
+          🌱 せいちょう中
+        </span>
+      </div>
+
+      <!-- モンスター表示エリア（タップ可能） -->
+      <div id="monster-tap-area" class="flex flex-col items-center justify-center py-2 cursor-pointer relative z-10" title="タップしてみよう！">
+        <div class="relative w-40 h-40 sm:w-44 sm:h-44 flex items-center justify-center">
+          <!-- 回転する背景オーラSVG -->
+          <div id="monster-aura-bg" class="absolute inset-0 flex items-center justify-center opacity-75 pointer-events-none"></div>
+          <!-- モンスター本体（カスタムSVG＋絵文字融合デザイン） -->
+          <div id="monster-visual-container" class="monster-float w-36 h-36 sm:w-40 sm:h-40 flex items-center justify-center relative z-10"></div>
+        </div>
+
+        <h2 id="monster-name" class="text-xl sm:text-2xl font-black text-slate-900 mt-1 text-center">
+          ほのおのタマゴ
+        </h2>
+      </div>
+
+      <!-- セリフ吹き出し -->
+      <div id="monster-speech" class="bg-white border-2 border-slate-400 rounded-2xl px-3.5 py-2 text-xs sm:text-sm font-extrabold text-slate-700 text-center mb-3 relative z-10 shadow-sm">
+        お<ruby>手伝<rt>てつだ</rt></ruby>いをすると ぼくが そだつよ！
+      </div>
+
+      <!-- レベルアップ＆進化ゲージ -->
+      <div class="bg-white/95 rounded-2xl p-3 border-2 border-slate-300 mb-3 relative z-10">
+        <div class="flex justify-between items-center text-xs sm:text-sm font-extrabold mb-1.5">
+          <span id="exp-stage-label" class="text-slate-700">つぎのレベルまで</span>
+          <span id="exp-remaining-text" class="text-orange-600 font-black">あと 5 pt！</span>
+        </div>
+        <div class="w-full h-4 bg-slate-200 rounded-full overflow-hidden border-2 border-slate-900">
+          <div id="exp-bar-fill" class="h-full bg-gradient-to-r from-green-500 via-lime-400 to-yellow-400 transition-all duration-500" style="width: 0%;"></div>
+        </div>
+
+        <!-- 殿堂入り達成時の次周回ボタン（Lv.10到達時のみ表示） -->
+        <div id="next-egg-cta" class="hidden mt-3 pt-2.5 border-t-2 border-dashed border-amber-300 text-center">
+          <p class="text-xs sm:text-sm font-black text-amber-700 mb-2">
+            👑 さいこうレベル（Lv.10）に <ruby>到達<rt>とうたつ</rt></ruby>したよ！
+          </p>
+          <button id="start-next-egg-btn" class="game-btn w-full bg-gradient-to-r from-yellow-400 to-orange-400 text-slate-900 font-black py-2.5 px-4 rounded-2xl text-sm sm:text-base">
+            🥚 あたらしいタマゴを えらぶ！（つぎのしゅうへ）
+          </button>
+        </div>
+      </div>
+
+      <!-- お手伝い傾向ステータスバー（進化ルート分岐ヒント） -->
+      <div class="bg-white/95 rounded-2xl p-3 border-2 border-slate-300 relative z-10">
+        <div class="flex items-center justify-between text-xs font-black mb-1.5">
+          <span>📊 このタマゴの お<ruby>手伝<rt>てつだ</rt></ruby>いバランス</span>
+          <span id="tendency-total-pt" class="text-slate-500">いくせい 0 pt</span>
+        </div>
+
+        <!-- 3色比率バー -->
+        <div class="w-full h-3.5 bg-slate-200 rounded-full overflow-hidden border-2 border-slate-900 flex mb-2">
+          <div id="bar-power" class="bg-red-500 h-full transition-all duration-300" style="width: 33.3%;"></div>
+          <div id="bar-smart" class="bg-blue-500 h-full transition-all duration-300" style="width: 33.4%;"></div>
+          <div id="bar-kind" class="bg-green-500 h-full transition-all duration-300" style="width: 33.3%;"></div>
+        </div>
+
+        <!-- タイプ別ポイント内訳 -->
+        <div class="grid grid-cols-3 gap-1 text-[11px] sm:text-xs font-extrabold text-center mb-2">
+          <div class="bg-red-50 text-red-700 rounded-lg py-1 border border-red-200">
+            🔥 パワー: <span id="pt-power">0</span>pt
+          </div>
+          <div class="bg-blue-50 text-blue-700 rounded-lg py-1 border border-blue-200">
+            💧 ちえ: <span id="pt-smart">0</span>pt
+          </div>
+          <div class="bg-green-50 text-green-700 rounded-lg py-1 border border-green-200">
+            🌿 やさしさ: <span id="pt-kind">0</span>pt
+          </div>
+        </div>
+
+        <!-- 分岐ヒントメッセージ -->
+        <div id="branch-hint-box" class="bg-amber-50 border border-amber-300 rounded-xl px-2.5 py-1.5 text-xs font-extrabold text-amber-900 text-center">
+          💡 Lv.5になると おおいタイプによって <ruby>進化<rt>しんか</rt></ruby>ルートがきまるよ！
+        </div>
+      </div>
+    </section>
+
+    <!-- ==================== タブ1：おてつだい ==================== -->
+    <section id="tab-chores" class="tab-section">
+      <div class="flex items-center justify-between mb-3">
+        <h3 class="text-base sm:text-lg font-black text-slate-900">
+          ⚡ お<ruby>手伝<rt>てつだ</rt></ruby>いボタンを押そう！
+        </h3>
+        <span id="today-date-label" class="bg-white border-2 border-slate-900 rounded-full px-3 py-0.5 text-xs sm:text-sm font-black">
+          今日
+        </span>
+      </div>
+
+      <!-- カテゴリフィルター -->
+      <div class="flex gap-1.5 overflow-x-auto no-scrollbar pb-2 mb-2">
+        <button class="chore-filter-btn active bg-slate-900 text-white text-xs font-black px-3 py-1.5 rounded-full border-2 border-slate-900 whitespace-nowrap" data-filter="all">
+          すべて
+        </button>
+        <button class="chore-filter-btn bg-white text-red-600 text-xs font-black px-3 py-1.5 rounded-full border-2 border-slate-900 whitespace-nowrap" data-filter="power">
+          🔥 パワー系
+        </button>
+        <button class="chore-filter-btn bg-white text-blue-600 text-xs font-black px-3 py-1.5 rounded-full border-2 border-slate-900 whitespace-nowrap" data-filter="smart">
+          💧 ちえ・きれい系
+        </button>
+        <button class="chore-filter-btn bg-white text-green-600 text-xs font-black px-3 py-1.5 rounded-full border-2 border-slate-900 whitespace-nowrap" data-filter="kind">
+          🌿 やさしさ系
+        </button>
+      </div>
+
+      <!-- お手伝いボタン一覧 -->
+      <div id="chore-list-grid" class="grid grid-cols-2 sm:grid-cols-3 gap-3 mb-5"></div>
+
+      <!-- 今日のやったことリスト -->
+      <div class="game-box bg-white rounded-2xl p-3.5">
+        <div class="flex items-center justify-between font-black text-sm sm:text-base mb-2 pb-1.5 border-b-2 border-slate-100">
+          <span>📝 今日やったことリスト</span>
+          <span id="today-earned-sum" class="text-orange-600">合計 0 pt</span>
+        </div>
+        <div id="today-log-list" class="divide-y divide-dashed divide-slate-200"></div>
+      </div>
+    </section>
+
+    <!-- ==================== タブ2：カレンダー ==================== -->
+    <section id="tab-calendar" class="tab-section hidden">
+      <div class="flex items-center justify-between mb-3">
+        <h3 class="text-base sm:text-lg font-black text-slate-900">
+          📅 お<ruby>手伝<rt>てつだ</rt></ruby>いカレンダー
+        </h3>
+        <button id="cal-today-btn" class="game-btn bg-sky-100 text-slate-900 text-xs font-black px-3 py-1.5 rounded-xl">
+          今日にもどる
+        </button>
+      </div>
+
+      <div class="game-box-lg bg-white rounded-3xl p-3.5">
+        <div class="flex items-center justify-between mb-3">
+          <button id="cal-prev-btn" class="game-btn bg-slate-100 text-xs sm:text-sm font-black px-3 py-1.5 rounded-xl">
+            ◀ まえの月
+          </button>
+          <div id="cal-month-title" class="text-base sm:text-lg font-black">2026年 11月</div>
+          <button id="cal-next-btn" class="game-btn bg-slate-100 text-xs sm:text-sm font-black px-3 py-1.5 rounded-xl">
+            つぎの月 ▶
+          </button>
+        </div>
+
+        <div class="grid grid-cols-7 text-center font-black text-xs sm:text-sm mb-1.5">
+          <div class="text-red-500">日</div>
+          <div>月</div>
+          <div>火</div>
+          <div>水</div>
+          <div>木</div>
+          <div>金</div>
+          <div class="text-blue-500">土</div>
+        </div>
+
+        <div id="cal-grid" class="grid grid-cols-7 gap-1.5"></div>
+      </div>
+      <p class="text-xs font-extrabold text-slate-600 text-center mt-2.5">
+        💡 日にちをタップすると、その日のきろくを見たり、あとからついかできるよ！
+      </p>
+    </section>
+
+    <!-- ==================== タブ3：ごほうび ==================== -->
+    <section id="tab-rewards" class="tab-section hidden">
+      <div class="flex items-center justify-between mb-3">
+        <h3 class="text-base sm:text-lg font-black text-slate-900">
+          🎁 ごほうび<ruby>交換<rt>こうかん</rt></ruby>ショップ
+        </h3>
+      </div>
+
+      <div id="reward-list-grid" class="grid grid-cols-2 sm:grid-cols-3 gap-3 mb-5"></div>
+
+      <div class="game-box bg-white rounded-2xl p-3.5">
+        <div class="font-black text-sm sm:text-base mb-2 pb-1.5 border-b-2 border-slate-100">
+          🎟️ これまでにもらったごほうびチケット
+        </div>
+        <div id="reward-history-list" class="divide-y divide-dashed divide-slate-200"></div>
+      </div>
+    </section>
+
+    <!-- ==================== タブ4：ずかん ==================== -->
+    <section id="tab-zukan" class="tab-section hidden">
+      <div class="flex flex-wrap items-center justify-between gap-2 mb-3">
+        <h3 class="text-base sm:text-lg font-black text-slate-900">
+          📖 モンスター<ruby>図鑑<rt>ずかん</rt></ruby>
+        </h3>
+        <span id="zukan-progress-badge" class="bg-yellow-300 border-2 border-slate-900 rounded-full px-3 py-0.5 text-xs font-black">
+          発見数: 1 / 39
+        </span>
+      </div>
+
+      <!-- 殿堂入りコレクション枠 -->
+      <div class="game-box bg-gradient-to-r from-amber-50 to-yellow-100 rounded-2xl p-3.5 mb-4">
+        <div class="font-black text-sm text-amber-900 mb-2 flex items-center justify-between">
+          <span>👑 <ruby>殿堂入<rt>でんどうい</rt></ruby>りした パートナーたち（Lv.10<ruby>達成<rt>たっせい</rt></ruby>）</span>
+          <span id="hof-count" class="text-xs bg-amber-300 px-2 py-0.5 rounded-full border border-slate-900">0ひき</span>
+        </div>
+        <div id="hall-of-fame-list" class="flex gap-2.5 overflow-x-auto pb-1"></div>
+      </div>
+
+      <!-- 属性切り替えタブ -->
+      <div class="grid grid-cols-3 gap-2 mb-3">
+        <button class="zukan-attr-btn game-btn bg-red-500 text-white text-xs sm:text-sm font-black py-2 rounded-xl" data-attr="fire">
+          🔥 ほのお
+        </button>
+        <button class="zukan-attr-btn game-btn bg-white text-blue-600 text-xs sm:text-sm font-black py-2 rounded-xl" data-attr="water">
+          💧 みず
+        </button>
+        <button class="zukan-attr-btn game-btn bg-white text-green-600 text-xs sm:text-sm font-black py-2 rounded-xl" data-attr="forest">
+          🌿 もり
+        </button>
+      </div>
+
+      <!-- 図鑑リスト本体 -->
+      <div id="zukan-content-area" class="space-y-4"></div>
+    </section>
+
+  </main>
+
+  <!-- 下部タブナビゲーション（4タブ） -->
+  <nav class="fixed bottom-0 inset-x-0 bg-white border-t-4 border-slate-900 px-2 py-1.5 z-40">
+    <div class="max-w-2xl mx-auto grid grid-cols-4 gap-1.5">
+      <button class="nav-item active flex flex-col items-center justify-center py-1 rounded-xl bg-yellow-300 text-slate-900 border-2 border-slate-900 font-black text-xs" data-tab="tab-chores">
+        <span class="text-xl leading-none mb-0.5">💪</span>
+        <span>お<ruby>手伝<rt>てつだ</rt></ruby>い</span>
+      </button>
+      <button class="nav-item flex flex-col items-center justify-center py-1 rounded-xl text-slate-500 font-extrabold text-xs" data-tab="tab-calendar">
+        <span class="text-xl leading-none mb-0.5">📅</span>
+        <span>カレンダー</span>
+      </button>
+      <button class="nav-item flex flex-col items-center justify-center py-1 rounded-xl text-slate-500 font-extrabold text-xs" data-tab="tab-rewards">
+        <span class="text-xl leading-none mb-0.5">🎁</span>
+        <span>ごほうび</span>
+      </button>
+      <button class="nav-item flex flex-col items-center justify-center py-1 rounded-xl text-slate-500 font-extrabold text-xs" data-tab="tab-zukan">
+        <span class="text-xl leading-none mb-0.5">📖</span>
+        <span>ずかん</span>
+      </button>
+    </div>
+  </nav>
+
+  <!-- ==================== モーダル1：パートナー（タマゴ）選択 ==================== -->
+  <div id="modal-egg-select" class="modal-backdrop fixed inset-0 z-50 hidden items-center justify-center p-3">
+    <div class="game-box-lg bg-white rounded-3xl w-full max-w-lg max-h-[90vh] overflow-y-auto p-4 sm:p-5">
+      <div class="text-center mb-3">
+        <span class="inline-block bg-yellow-300 border-2 border-slate-900 rounded-full px-3 py-0.5 text-xs font-black mb-1">
+          🥚 パートナーえらび
+        </span>
+        <h2 class="text-xl sm:text-2xl font-black text-slate-900">
+          どのタマゴを そだてる？
+        </h2>
+        <p class="text-xs sm:text-sm font-bold text-slate-600 mt-1">
+          お<ruby>手伝<rt>てつだ</rt></ruby>いのやりかた（パワー・ちえ・やさしさ）で<br>Lv.5から 3つのルートに <ruby>進化<rt>しんか</rt></ruby>がわかれるよ！
+        </p>
+      </div>
+
+      <div class="space-y-3" id="egg-choice-list">
+        <!-- ほのお -->
+        <button type="button" onclick="selectStarterEgg('fire')" class="game-btn w-full text-left bg-gradient-to-r from-red-50 to-orange-100 p-3.5 rounded-2xl flex items-center gap-3.5">
+          <div class="w-16 h-16 rounded-2xl bg-white border-2 border-slate-900 flex items-center justify-center text-4xl shrink-0 shadow-sm">
+            🔥🥚
+          </div>
+          <div>
+            <div class="text-base sm:text-lg font-black text-red-700">ほのおのタマゴ</div>
+            <div class="text-xs font-extrabold text-slate-700">かっこよくて あつい！炎・ドラゴン系</div>
+            <div class="text-[11px] font-bold text-orange-700 mt-0.5">進化例：マグマレックス / フレアウィザード / フェニックス</div>
+          </div>
+        </button>
+
+        <!-- みず -->
+        <button type="button" onclick="selectStarterEgg('water')" class="game-btn w-full text-left bg-gradient-to-r from-sky-50 to-blue-100 p-3.5 rounded-2xl flex items-center gap-3.5">
+          <div class="w-16 h-16 rounded-2xl bg-white border-2 border-slate-900 flex items-center justify-center text-4xl shrink-0 shadow-sm">
+            💧🥚
+          </div>
+          <div>
+            <div class="text-base sm:text-lg font-black text-blue-700">みずのタマゴ</div>
+            <div class="text-xs font-extrabold text-slate-700">クールで やさしい！水・海獣系</div>
+            <div class="text-[11px] font-bold text-blue-700 mt-0.5">進化例：タイダルシャーク / クリスタルセイレーン / リヴァイアサン</div>
+          </div>
+        </button>
+
+        <!-- もり -->
+        <button type="button" onclick="selectStarterEgg('forest')" class="game-btn w-full text-left bg-gradient-to-r from-lime-50 to-green-100 p-3.5 rounded-2xl flex items-center gap-3.5">
+          <div class="w-16 h-16 rounded-2xl bg-white border-2 border-slate-900 flex items-center justify-center text-4xl shrink-0 shadow-sm">
+            🌿🥚
+          </div>
+          <div>
+            <div class="text-base sm:text-lg font-black text-green-700">もりのタマゴ</div>
+            <div class="text-xs font-extrabold text-slate-700">たくましくて ちからもち！森・恐竜系</div>
+            <div class="text-[11px] font-bold text-green-700 mt-0.5">進化例：ガイアトリケラ / フォレストドルイド / ユグドラドラゴン</div>
+          </div>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ==================== モーダル2：進化＆殿堂入りお祝い ==================== -->
+  <div id="modal-evolution" class="modal-backdrop fixed inset-0 z-50 hidden items-center justify-center p-4">
+    <div class="game-box-lg bg-gradient-to-b from-yellow-200 via-white to-amber-50 rounded-3xl w-full max-w-md p-5 text-center">
+      <div id="evo-badge-top" class="inline-block bg-orange-500 text-white border-2 border-slate-900 rounded-full px-4 py-1 text-xs sm:text-sm font-black mb-2">
+        🎉 レベルアップ＆進化！ 🎉
+      </div>
+      <h2 id="evo-title" class="text-xl sm:text-2xl font-black text-slate-900 mb-2">
+        モンスターが 進化した！
+      </h2>
+      <div id="evo-branch-notice" class="hidden bg-sky-100 border-2 border-sky-500 text-sky-900 rounded-xl px-3 py-1.5 text-xs font-black mb-2"></div>
+      <div id="evo-visual-box" class="w-40 h-40 mx-auto my-2 flex items-center justify-center"></div>
+      <div id="evo-monster-name" class="text-xl font-black text-slate-900 mb-1"></div>
+      <p id="evo-monster-desc" class="text-xs sm:text-sm font-bold text-slate-700 mb-4 px-2"></p>
+
+      <div id="evo-action-buttons" class="space-y-2">
+        <button type="button" onclick="closeModal('modal-evolution')" class="game-btn w-full bg-green-500 text-white font-black py-3 rounded-2xl text-base">
+          やったー！つづける
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ==================== モーダル3：図鑑詳細表示 ==================== -->
+  <div id="modal-zukan-detail" class="modal-backdrop fixed inset-0 z-50 hidden items-center justify-center p-4">
+    <div class="game-box-lg bg-white rounded-3xl w-full max-w-sm p-5 text-center">
+      <div id="zd-level-badge" class="inline-block bg-slate-900 text-yellow-300 text-xs font-black px-3 py-0.5 rounded-full mb-2"></div>
+      <div id="zd-visual-box" class="w-36 h-36 mx-auto my-2 flex items-center justify-center"></div>
+      <h3 id="zd-name" class="text-xl font-black text-slate-900 mb-1"></h3>
+      <div id="zd-route-tag" class="text-xs font-extrabold text-slate-500 mb-2"></div>
+      <p id="zd-desc" class="bg-slate-50 border-2 border-slate-200 rounded-2xl p-3 text-xs sm:text-sm font-bold text-slate-700 mb-4"></p>
+      <button type="button" onclick="closeModal('modal-zukan-detail')" class="game-btn w-full bg-slate-200 text-slate-900 font-black py-2.5 rounded-2xl">
+        とじる
+      </button>
+    </div>
+  </div>
+
+  <!-- ==================== モーダル4：カレンダー日付詳細 ==================== -->
+  <div id="modal-day-detail" class="modal-backdrop fixed inset-0 z-50 hidden items-center justify-center p-4">
+    <div class="game-box-lg bg-white rounded-3xl w-full max-w-md max-h-[88vh] overflow-y-auto p-4 sm:p-5">
+      <h2 id="day-detail-title" class="text-lg sm:text-xl font-black text-center mb-3">きろく</h2>
+      <div id="day-detail-logs" class="divide-y divide-dashed divide-slate-200 mb-4"></div>
+      <div class="border-t-2 border-dashed border-slate-300 pt-3">
+        <div class="text-xs sm:text-sm font-black mb-2">➕ この日のお<ruby>手伝<rt>てつだ</rt></ruby>いをついかする</div>
+        <div id="day-detail-add-btns" class="flex flex-wrap gap-1.5"></div>
+      </div>
+      <button type="button" onclick="closeModal('modal-day-detail')" class="game-btn w-full bg-slate-200 text-slate-900 font-black py-2.5 rounded-2xl mt-4">
+        とじる
+      </button>
+    </div>
+  </div>
+
+  <!-- ==================== モーダル5：ごほうび交換確認＆チケット ==================== -->
+  <div id="modal-reward-confirm" class="modal-backdrop fixed inset-0 z-50 hidden items-center justify-center p-4">
+    <div class="game-box-lg bg-white rounded-3xl w-full max-w-md p-5 text-center">
+      <h2 id="reward-modal-title" class="text-lg sm:text-xl font-black mb-2">ごほうびと <ruby>交換<rt>こうかん</rt></ruby>する？</h2>
+      <div id="reward-modal-body"></div>
+    </div>
+  </div>
+
+  <!-- ==================== モーダル6：保護者確認ゲート ==================== -->
+  <div id="modal-parent-gate" class="modal-backdrop fixed inset-0 z-50 hidden items-center justify-center p-4">
+    <div class="game-box-lg bg-white rounded-3xl w-full max-w-sm p-5 text-center">
+      <h2 class="text-lg font-black mb-1">🔒 おうちのひと<ruby>確認<rt>かくにん</rt></ruby></h2>
+      <p class="text-xs font-bold text-slate-600 mb-3">せってい画面をひらくには、つぎの計算にこたえてください。</p>
+      <div id="gate-question" class="text-2xl font-black text-blue-600 mb-3"></div>
+      <input type="number" id="gate-answer-input" class="w-36 text-center text-xl font-black border-[3px] border-slate-900 rounded-xl py-2 mb-4" placeholder="こたえ">
+      <div class="flex gap-2">
+        <button type="button" onclick="closeModal('modal-parent-gate')" class="game-btn flex-1 bg-slate-200 font-black py-2.5 rounded-xl">やめる</button>
+        <button type="button" id="gate-submit-btn" class="game-btn flex-1 bg-green-500 text-white font-black py-2.5 rounded-xl">OK</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ==================== モーダル7：おうちのひと設定 ==================== -->
+  <div id="modal-settings" class="modal-backdrop fixed inset-0 z-50 hidden items-center justify-center p-3">
+    <div class="game-box-lg bg-white rounded-3xl w-full max-w-lg max-h-[90vh] overflow-y-auto p-4 sm:p-5">
+      <h2 class="text-lg sm:text-xl font-black text-center mb-3">⚙️ おうちのひと<ruby>設定<rt>せってい</rt></ruby></h2>
+
+      <!-- 設定内タブ -->
+      <div class="grid grid-cols-2 gap-2 mb-4">
+        <button id="set-tab-chores" class="game-btn bg-yellow-300 text-xs sm:text-sm font-black py-2 rounded-xl">
+          お<ruby>手伝<rt>てつだ</rt></ruby>い<ruby>編集<rt>へんしゅう</rt></ruby>
+        </button>
+        <button id="set-tab-rewards" class="game-btn bg-sky-100 text-xs sm:text-sm font-black py-2 rounded-xl">
+          ごほうび<ruby>編集<rt>へんしゅう</rt></ruby>
+        </button>
+      </div>
+
+      <!-- お手伝い設定パネル -->
+      <div id="settings-chores-panel">
+        <div class="bg-slate-100 p-3 rounded-2xl border-2 border-slate-300 mb-4 space-y-2.5">
+          <div id="chore-form-heading" class="font-black text-sm">➕ 新しいお<ruby>手伝<rt>てつだ</rt></ruby>いをついか</div>
+          <input type="hidden" id="edit-chore-id">
+          <div>
+            <label class="block text-xs font-extrabold mb-1">お<ruby>手伝<rt>てつだ</rt></ruby>いのなまえ</label>
+            <input type="text" id="input-chore-name" class="w-full border-2 border-slate-900 rounded-xl px-3 py-2 font-bold text-sm" placeholder="例：おふろそうじ">
+          </div>
+          <div class="grid grid-cols-2 gap-2">
+            <div>
+              <label class="block text-xs font-extrabold mb-1">ポイント（pt）</label>
+              <input type="number" id="input-chore-pt" class="w-full border-2 border-slate-900 rounded-xl px-3 py-2 font-bold text-sm" min="1" max="50" value="2">
+            </div>
+            <div>
+              <label class="block text-xs font-extrabold mb-1">タイプ（進化ルート）</label>
+              <select id="input-chore-cat" class="w-full border-2 border-slate-900 rounded-xl px-2 py-2 font-bold text-sm bg-white">
+                <option value="power">🔥 パワー系</option>
+                <option value="smart">💧 ちえ・きれい系</option>
+                <option value="kind">🌿 やさしさ系</option>
+              </select>
+            </div>
+          </div>
+          <div>
+            <label class="block text-xs font-extrabold mb-1">アイコン</label>
+            <div id="chore-emoji-picker" class="flex flex-wrap gap-1.5"></div>
+          </div>
+          <div class="flex gap-2 pt-1">
+            <button type="button" id="save-chore-btn" class="game-btn flex-1 bg-green-500 text-white font-black py-2 rounded-xl text-sm">ほぞんする</button>
+            <button type="button" id="cancel-chore-edit-btn" class="game-btn bg-slate-200 font-black px-3 py-2 rounded-xl text-sm hidden">やめる</button>
+          </div>
+        </div>
+        <div class="font-black text-xs mb-2">登録されているお<ruby>手伝<rt>てつだ</rt></ruby>い一覧</div>
+        <div id="settings-chore-list" class="space-y-2"></div>
+      </div>
+
+      <!-- ごほうび設定パネル -->
+      <div id="settings-rewards-panel" class="hidden">
+        <div class="bg-slate-100 p-3 rounded-2xl border-2 border-slate-300 mb-4 space-y-2.5">
+          <div id="reward-form-heading" class="font-black text-sm">➕ 新しいごほうびをついか</div>
+          <input type="hidden" id="edit-reward-id">
+          <div>
+            <label class="block text-xs font-extrabold mb-1">ごほうびのなまえ</label>
+            <input type="text" id="input-reward-name" class="w-full border-2 border-slate-900 rounded-xl px-3 py-2 font-bold text-sm" placeholder="例：ゲーム 30ぷん">
+          </div>
+          <div>
+            <label class="block text-xs font-extrabold mb-1">ひつようなポイント（pt）</label>
+            <input type="number" id="input-reward-cost" class="w-full border-2 border-slate-900 rounded-xl px-3 py-2 font-bold text-sm" min="1" max="500" value="10">
+          </div>
+          <div>
+            <label class="block text-xs font-extrabold mb-1">アイコン</label>
+            <div id="reward-emoji-picker" class="flex flex-wrap gap-1.5"></div>
+          </div>
+          <div class="flex gap-2 pt-1">
+            <button type="button" id="save-reward-btn" class="game-btn flex-1 bg-green-500 text-white font-black py-2 rounded-xl text-sm">ほぞんする</button>
+            <button type="button" id="cancel-reward-edit-btn" class="game-btn bg-slate-200 font-black px-3 py-2 rounded-xl text-sm hidden">やめる</button>
+          </div>
+        </div>
+        <div class="font-black text-xs mb-2">登録されているごほうび一覧</div>
+        <div id="settings-reward-list" class="space-y-2"></div>
+      </div>
+
+      <div class="border-t-2 border-slate-200 mt-5 pt-3 text-center">
+        <button type="button" id="reset-all-data-btn" class="game-btn bg-red-500 text-white text-xs font-black px-4 py-2 rounded-xl">
+          ⚠️ データをすべてしょき化する
+        </button>
+      </div>
+
+      <button type="button" onclick="closeModal('modal-settings')" class="game-btn w-full bg-slate-200 font-black py-2.5 rounded-2xl mt-4">
+        せっていをおわる
+      </button>
+    </div>
+  </div>
+
+  <script>
+    /* =========================================================================
+       1. サウンドシステム（Web Audio API シンセ効果音）
+       ========================================================================= */
+    const SoundFX = {
+      ctx: null,
+      muted: false,
+
+      init() {
+        if (!this.ctx) {
+          const AudioCtx = window.AudioContext || window.webkitAudioContext;
+          if (AudioCtx) this.ctx = new AudioCtx();
+        }
+        if (this.ctx && this.ctx.state === 'suspended') {
+          this.ctx.resume();
+        }
+      },
+
+      playTone(freq, type, duration, delay = 0, gainVal = 0.16) {
+        if (this.muted) return;
+        this.init();
+        if (!this.ctx) return;
+
+        const osc = this.ctx.createOscillator();
+        const gain = this.ctx.createGain();
+        osc.type = type;
+        osc.frequency.setValueAtTime(freq, this.ctx.currentTime + delay);
+
+        gain.gain.setValueAtTime(gainVal, this.ctx.currentTime + delay);
+        gain.gain.exponentialRampToValueAtTime(0.001, this.ctx.currentTime + delay + duration);
+
+        osc.connect(gain);
+        gain.connect(this.ctx.destination);
+
+        osc.start(this.ctx.currentTime + delay);
+        osc.stop(this.ctx.currentTime + delay + duration);
+      },
+
+      playCoin() {
+        this.playTone(987.77, 'sine', 0.11, 0, 0.18);
+        this.playTone(1318.51, 'sine', 0.25, 0.08, 0.18);
+      },
+
+      playMonsterCry(level) {
+        const base = 280 + level * 42;
+        this.playTone(base, 'triangle', 0.12, 0, 0.18);
+        this.playTone(base * 1.35, 'triangle', 0.18, 0.09, 0.18);
+      },
+
+      playFanfare() {
+        const notes = [
+          { f: 523.25, d: 0.11, t: 0.00 },
+          { f: 523.25, d: 0.11, t: 0.13 },
+          { f: 523.25, d: 0.11, t: 0.26 },
+          { f: 659.25, d: 0.24, t: 0.39 },
+          { f: 587.33, d: 0.20, t: 0.65 },
+          { f: 659.25, d: 0.20, t: 0.87 },
+          { f: 783.99, d: 0.55, t: 1.10 }
+        ];
+        notes.forEach(n => this.playTone(n.f, 'triangle', n.d, n.t, 0.2));
+      },
+
+      playCancel() {
+        this.playTone(330, 'sine', 0.11, 0, 0.14);
+        this.playTone(261.63, 'sine', 0.16, 0.09, 0.14);
+      }
+    };
+
+    /* =========================================================================
+       2. モンスター進化データベース（3属性 × 10段階 × Lv.5から3分岐 = 全39種類）
+       ========================================================================= */
+    // 各レベルに到達するための周回内育成ポイントしきい値（10段階）
+    const LEVEL_THRESHOLDS = [
+      { level: 1, minPt: 0 },
+      { level: 2, minPt: 4 },
+      { level: 3, minPt: 10 },
+      { level: 4, minPt: 18 },
+      { level: 5, minPt: 28 }, // ここで3ルートに分岐！
+      { level: 6, minPt: 40 },
+      { level: 7, minPt: 54 },
+      { level: 8, minPt: 70 },
+      { level: 9, minPt: 88 },
+      { level: 10, minPt: 110 } // 最終進化（殿堂入り）
+    ];
+
+    const ATTR_META = {
+      fire: {
+        label: '🔥 ほのお',
+        badgeBg: 'bg-red-500 text-white',
+        cardGradient: 'from-red-100 via-amber-50 to-orange-100',
+        auraColor: '#f97316',
+        ringColor: '#ef4444'
+      },
+      water: {
+        label: '💧 みず',
+        badgeBg: 'bg-blue-500 text-white',
+        cardGradient: 'from-sky-100 via-cyan-50 to-blue-100',
+        auraColor: '#38bdf8',
+        ringColor: '#2563eb'
+      },
+      forest: {
+        label: '🌿 もり',
+        badgeBg: 'bg-green-600 text-white',
+        cardGradient: 'from-lime-100 via-emerald-50 to-green-100',
+        auraColor: '#4ade80',
+        ringColor: '#16a34a'
+      }
+    };
+
+    const BRANCH_META = {
+      power: { label: '🔥 パワールート', short: 'パワー', color: 'text-red-600', icon: '🔥' },
+      smart: { label: '💧 ちえルート', short: 'ちえ', color: 'text-blue-600', icon: '💧' },
+      kind:  { label: '🌿 やさしさルート', short: 'やさしさ', color: 'text-green-600', icon: '🌿' }
+    };
+
+    // 全39種類のモンスター定義
+    // id規則: `${attr}_common_${1..4}` または `${attr}_${branch}_${5..10}`
+    const MONSTER_DB = {
+      // ---------------- 🔥 ほのお属性 ----------------
+      fire: {
+        common: [
+          { id: 'fire_common_1', level: 1, name: 'ほのおのタマゴ', emoji: '🥚', subEmoji: '🔥', desc: 'あたたかい ほのおのエネルギーをつつんだ ふしぎなタマゴ。' },
+          { id: 'fire_common_2', level: 2, name: 'ヒノタマ', emoji: '🐣', subEmoji: '🔥', desc: 'タマゴから うまれたばかり！しっぽに 小さな炎が ともっている。' },
+          { id: 'fire_common_3', level: 3, name: 'メラリザード', emoji: '🦎', subEmoji: '🔥', desc: 'げんきいっぱい 走りまわる 炎のトカゲ。おてつだいが 大好き！' },
+          { id: 'fire_common_4', level: 4, name: 'ブレイズドン', emoji: '🦖', subEmoji: '💥', desc: 'ツノが はえて たくましくなった！つぎの進化で すがたが大きくかわるぞ！' }
+        ],
+        branches: {
+          power: [
+            { id: 'fire_power_5', level: 5, name: 'マグマザウルス', emoji: '🦖', subEmoji: '🌋', desc: '【パワールート】ちからじまんの 炎の恐竜！岩もくだく パワーをもつ。' },
+            { id: 'fire_power_6', level: 6, name: 'ボルケーノレックス', emoji: '🐉', subEmoji: '🌋', desc: 'かざんのエネルギーを 体にためこんだ 大迫力の 炎竜戦士。' },
+            { id: 'fire_power_7', level: 7, name: 'メテオドラゴン', emoji: '🐲', subEmoji: '☄️', desc: '空から いんせきのように まいおりる ちょうパワフルな ドラゴン！' },
+            { id: 'fire_power_8', level: 8, name: 'ギガフレアタイタン', emoji: '👹', subEmoji: '🔥', desc: 'もえさかる よろいを まとった 炎のきょじん。だれにも まけぬちから！' },
+            { id: 'fire_power_9', level: 9, name: 'カイザーマグマ竜', emoji: '🐉', subEmoji: '👑', desc: '大地を ゆるがす おたけびをあげる ほのおの こうていドラゴン！' },
+            { id: 'fire_power_10', level: 10, name: 'ゴッドマグマレックス', emoji: '🐲', subEmoji: '👑🔥', desc: '【最終進化】たいようの ような さいきょうパワーをもつ 伝説の炎王竜！' }
+          ],
+          smart: [
+            { id: 'fire_smart_5', level: 5, name: 'フレアウィザード', emoji: '🧙‍♂️', subEmoji: '🔥', desc: '【ちえルート】ほのおの まほうをつかいこなす かしこい モンスター。' },
+            { id: 'fire_smart_6', level: 6, name: 'アークメイジ竜', emoji: '🦊', subEmoji: '✨', desc: 'あおい炎で まわりを ピカピカにする きれいで 頭脳派な 炎ぎつね。' },
+            { id: 'fire_smart_7', level: 7, name: 'スターファイア賢者', emoji: '🦁', subEmoji: '🔮', desc: 'ほしぞらの 知恵を さずかった 気高い 炎のたてがみをもつ 賢者。' },
+            { id: 'fire_smart_8', level: 8, name: 'ブルーノヴァ騎士', emoji: '🤺', subEmoji: '💠', desc: 'いちばん 温度の高い あおい炎のつるぎを ふるう クールな剣士！' },
+            { id: 'fire_smart_9', level: 9, name: 'コスモフレア竜王', emoji: '🐉', subEmoji: '🌌', desc: 'うちゅうの ほのおを あやつる せいなる ドラゴンマスター。' },
+            { id: 'fire_smart_10', level: 10, name: 'インフィニティフレア神', emoji: '🐲', subEmoji: '👑💠', desc: '【最終進化】ちえと ほのおの力を きわめた さいきょうの 炎神！' }
+          ],
+          kind: [
+            { id: 'fire_kind_5', level: 5, name: 'サニーバード', emoji: '🐥', subEmoji: '☀️', desc: '【やさしさルート】みんなを ぽかぽか あたためる やさしい 炎の小鳥。' },
+            { id: 'fire_kind_6', level: 6, name: 'ホーリーフェニックス', emoji: '🦅', subEmoji: '✨', desc: 'かがやく つばさで みんなを えがおにする 希望の 不死鳥！' },
+            { id: 'fire_kind_7', level: 7, name: 'サンシャインペガサス', emoji: '🦄', subEmoji: '🌈', desc: 'にじいろの たてがみを もち 空を かける やさしい 炎のてんま。' },
+            { id: 'fire_kind_8', level: 8, name: 'エンジェルフレイム', emoji: '🕊️', subEmoji: '💛', desc: 'おもいやりの 心に こたえて 進化した せいなる 炎の守護者。' },
+            { id: 'fire_kind_9', level: 9, name: 'ソラリスドラゴン', emoji: '🐉', subEmoji: '☀️', desc: 'おひさまのように あたたかい 光をはなつ 黄金の やさしき竜。' },
+            { id: 'fire_kind_10', level: 10, name: 'ゴッドサンフェニックス', emoji: '🦅', subEmoji: '👑☀️', desc: '【最終進化】せかいじゅうを あたたかい光で つつみこむ 伝説の太陽鳥！' }
+          ]
+        }
+      },
+
+      // ---------------- 💧 みず属性 ----------------
+      water: {
+        common: [
+          { id: 'water_common_1', level: 1, name: 'みずのタマゴ', emoji: '🥚', subEmoji: '💧', desc: 'すきとおる きれいな水につつまれた ふしぎなタマゴ。' },
+          { id: 'water_common_2', level: 2, name: 'アワプク', emoji: '🫧', subEmoji: '💧', desc: 'タマゴから うまれたばかり！あわを ぷくぷく ふくのが とくい。' },
+          { id: 'water_common_3', level: 3, name: 'アクアペンギン', emoji: '🐧', subEmoji: '💧', desc: 'すいすい およぐのが 大すきな 元気いっぱいの 水モンスター！' },
+          { id: 'water_common_4', level: 4, name: 'スプラッシュドルフィン', emoji: '🐬', subEmoji: '🌊', desc: '大ジャンプが できるようになった！つぎの進化で すがたが大きくかわるぞ！' }
+        ],
+        branches: {
+          power: [
+            { id: 'water_power_5', level: 5, name: 'タイダルシャーク', emoji: '🦈', subEmoji: '🌊', desc: '【パワールート】あらい波も つきすすむ たくましい 海のハンター！' },
+            { id: 'water_power_6', level: 6, name: 'メガロドンナイト', emoji: '🦈', subEmoji: '⚔️', desc: 'はがねの よろいを まとった 力じまんの 巨大サメ戦士！' },
+            { id: 'water_power_7', level: 7, name: 'ストームホエール', emoji: '🐳', subEmoji: '🌪️', desc: 'おおきな 体で 大うなばらを まもる 力強い クジラ王。' },
+            { id: 'water_power_8', level: 8, name: 'ポセイドンレックス', emoji: '🐊', subEmoji: '🔱', desc: 'うみの やりを もち どんな荒波も おさめる 水竜の勇者。' },
+            { id: 'water_power_9', level: 9, name: 'アビスリヴァイアサン', emoji: '🐉', subEmoji: '🌊', desc: 'ふかい海の 底から めざめた 圧倒的パワーの 海竜！' },
+            { id: 'water_power_10', level: 10, name: 'ゴッドオーシャンキング', emoji: '🐉', subEmoji: '👑🌊', desc: '【最終進化】すべての海を おさめる さいきょうの 海王ドラゴン！' }
+          ],
+          smart: [
+            { id: 'water_smart_5', level: 5, name: 'クリスタルタートル', emoji: '🐢', subEmoji: '💎', desc: '【ちえルート】ほうせきのように きれいな こうらをもつ かしこいカメ。' },
+            { id: 'water_smart_6', level: 6, name: 'バブルプロフェッサー', emoji: '🐙', subEmoji: '🎓', desc: '8本の うでで なんでも テキパキ かたづける 海の発明家！' },
+            { id: 'water_smart_7', level: 7, name: 'アクアユニコーン', emoji: '🦄', subEmoji: '❄️', desc: 'こおりと 水の まほうをあやつる 美しく かしこい 水の精霊。' },
+            { id: 'water_smart_8', level: 8, name: 'グレイシアドラゴン', emoji: '🐉', subEmoji: '❄️', desc: 'きらめく 氷のつばさを もつ クールで 頭脳派の 氷水竜！' },
+            { id: 'water_smart_9', level: 9, name: 'オーロラセイレーン竜', emoji: '🐲', subEmoji: '🌌', desc: 'よぞらの オーロラを まとった せいなる 知恵の海竜。' },
+            { id: 'water_smart_10', level: 10, name: 'クリスタルネプチューン', emoji: '🐲', subEmoji: '👑💎', desc: '【最終進化】ちえと きれいな水の力で 世界をてらす 水晶神竜！' }
+          ],
+          kind: [
+            { id: 'water_kind_5', level: 5, name: 'ヒーリングアザラシ', emoji: '🦭', subEmoji: '💧', desc: '【やさしさルート】ふわふわの 体で みんなを いやす やさしい海獣。' },
+            { id: 'water_kind_6', level: 6, name: 'レインボーオッター', emoji: '🦦', subEmoji: '🌈', desc: 'きれいな 川や海を まもる 気配りじょうずな かわうそ戦士。' },
+            { id: 'water_kind_7', level: 7, name: 'アクアエンジェル', emoji: '🪼', subEmoji: '✨', desc: 'きらきら ひかる しずくで みんなを 元気にする 海のてんし。' },
+            { id: 'water_kind_8', level: 8, name: 'マーメイドドラゴン', emoji: '🐉', subEmoji: '🐚', desc: 'うつくしい 歌声で みんなを 幸せにする やさしき水の竜。' },
+            { id: 'water_kind_9', level: 9, name: 'ブレッシングホエール', emoji: '🐳', subEmoji: '💖', desc: 'おおきな やさしさで 仲間をつつみこむ せいなる 白クジラ。' },
+            { id: 'water_kind_10', level: 10, name: 'ゴッドレインボードラゴン', emoji: '🐉', subEmoji: '👑🌈', desc: '【最終進化】あめあがりの 大きな虹をかける やさしさの 水神竜！' }
+          ]
+        }
+      },
+
+      // ---------------- 🌿 もり属性 ----------------
+      forest: {
+        common: [
+          { id: 'forest_common_1', level: 1, name: 'もりのタマゴ', emoji: '🥚', subEmoji: '🌿', desc: 'あおい葉っぱの もようがついた 自然いっぱいの ふしぎなタマゴ。' },
+          { id: 'forest_common_2', level: 2, name: 'タネピヨ', emoji: '🌱', subEmoji: '🐣', desc: 'タマゴから うまれたばかり！あたまの フタバが ぴょこぴょこ ゆれる。' },
+          { id: 'forest_common_3', level: 3, name: 'リーフザウルス', emoji: '🦕', subEmoji: '🌿', desc: 'もりの なかを 元気に けんけんぱ！やさしい ちからもちの 小恐竜。' },
+          { id: 'forest_common_4', level: 4, name: 'ウッドラプトル', emoji: '🦖', subEmoji: '🍃', desc: 'すばやく 走れるようになった！つぎの進化で すがたが大きくかわるぞ！' }
+        ],
+        branches: {
+          power: [
+            { id: 'forest_power_5', level: 5, name: 'ガイアトリケラ', emoji: '🦕', subEmoji: '🪨', desc: '【パワールート】3本の ツノで どんなものも おしとおす 大地の恐竜！' },
+            { id: 'forest_power_6', level: 6, name: 'アイアンコング', emoji: '🦍', subEmoji: '🌿', desc: 'もりの へいわを まもる むきむき パワフルな 森の王者！' },
+            { id: 'forest_power_7', level: 7, name: 'ロックブラキオ', emoji: '🦕', subEmoji: '⛰️', desc: 'やまのように 大きくて たくましい 超重量級の 草食竜！' },
+            { id: 'forest_power_8', level: 8, name: 'ヘラクレスビートル', emoji: '🪲', subEmoji: '⚡', desc: 'おうごんの ツノをもつ こんちゅう界 さいきょうの パワー戦士！' },
+            { id: 'forest_power_9', level: 9, name: 'ガイアティラノ竜', emoji: '🦖', subEmoji: '🌍', desc: 'だいちの パワーを すべてあつめた 大自然の こうてい恐竜！' },
+            { id: 'forest_power_10', level: 10, name: 'ゴッドアースレックス', emoji: '🦖', subEmoji: '👑🌍', desc: '【最終進化】ちきゅうの 大地を 支える さいきょうの 恐竜王！' }
+          ],
+          smart: [
+            { id: 'forest_smart_5', level: 5, name: 'フォレストオウル', emoji: '🦉', subEmoji: '🍃', desc: '【ちえルート】もりの ものしり博士！なんでも よく知っている フクロウ。' },
+            { id: 'forest_smart_6', level: 6, name: 'リーフニンジャ', emoji: '🦊', subEmoji: '🍃', desc: 'このはがくれの じゅつを つかう すばしっこい 森の忍者！' },
+            { id: 'forest_smart_7', level: 7, name: 'エメラルドスタッグ', emoji: '🦌', subEmoji: '✨', desc: 'きらめく 角をもつ かしこくて 気高い もりの 守護神。' },
+            { id: 'forest_smart_8', level: 8, name: 'ドルイドドラゴン', emoji: '🐉', subEmoji: '🍀', desc: 'しぜんの 知恵と 風をあやつる せいなる 緑の竜賢者。' },
+            { id: 'forest_smart_9', level: 9, name: 'クロノスツリー竜', emoji: '🐲', subEmoji: '🌟', desc: 'せんねんの たいじゅの 力を宿した 知恵の ドラゴンマスター。' },
+            { id: 'forest_smart_10', level: 10, name: 'ユグドラシル神竜', emoji: '🐲', subEmoji: '👑🌳', desc: '【最終進化】せかいじゅの 知恵をもつ さいきょうの 森神ドラゴン！' }
+          ],
+          kind: [
+            { id: 'forest_kind_5', level: 5, name: 'フラワーバニー', emoji: '🐰', subEmoji: '🌸', desc: '【やさしさルート】あるくと 足もとに お花がさく やさしい ウサギ。' },
+            { id: 'forest_kind_6', level: 6, name: 'ハニーベア', emoji: '🐻', subEmoji: '🍯', desc: 'みんなに あまいハチミツを わけてくれる 心やさしい 森のクマさん。' },
+            { id: 'forest_kind_7', level: 7, name: 'フェアリーユニコーン', emoji: '🦄', subEmoji: '🌺', desc: '花畑を かけめぐる ようせいたちの リーダー！とっても やさしい。' },
+            { id: 'forest_kind_8', level: 8, name: 'ガーディアンパンダ', emoji: '🐼', subEmoji: '🎋', desc: 'ちいさな 生きものたちを いつも 見守る やさしい 森の守り神。' },
+            { id: 'forest_kind_9', level: 9, name: 'エデンブルーム竜', emoji: '🐉', subEmoji: '🌸', desc: 'せかいじゅうに きれいな花を さかせる やさしさの 緑竜！' },
+            { id: 'forest_kind_10', level: 10, name: 'ゴッドフラワードラゴン', emoji: '🐉', subEmoji: '👑🌸', desc: '【最終進化】やさしさの 花で せかいを いっぱいにする 伝説の花竜王！' }
+          ]
+        }
+      }
+    };
+
+    /* =========================================================================
+       3. アプリ状態管理 & LocalStorage 永続化
+       ========================================================================= */
+    const STORAGE_KEY = 'otetsudai_monsters_v2';
+
+    const DEFAULT_CHORES = [
+      { id: 'c1', name: 'おふろそうじ', pt: 3, cat: 'power', icon: '🛁' },
+      { id: 'c2', name: 'ゴミだし', pt: 2, cat: 'power', icon: '🗑️' },
+      { id: 'c3', name: 'くつならべ', pt: 1, cat: 'power', icon: '👟' },
+      { id: 'c4', name: 'しょっきあらい', pt: 2, cat: 'smart', icon: '🍽️' },
+      { id: 'c5', name: 'せんたくものたたみ', pt: 2, cat: 'smart', icon: '👕' },
+      { id: 'c6', name: 'あしたのじゅんび', pt: 2, cat: 'smart', icon: '🎒' },
+      { id: 'c7', name: 'ごはんのじゅんび', pt: 2, cat: 'kind', icon: '🥢' },
+      { id: 'c8', name: 'おせわ・おもいやり', pt: 2, cat: 'kind', icon: '💖' }
+    ];
+
+    const DEFAULT_REWARDS = [
+      { id: 'r1', name: 'すきなおやつ 1こ', cost: 8, icon: '🍨' },
+      { id: 'r2', name: 'ゲーム 30ぷん', cost: 10, icon: '🎮' },
+      { id: 'r3', name: '夜ふかし 15ぷん', cost: 12, icon: '🌙' },
+      { id: 'r4', name: 'おこづかい 100えん', cost: 15, icon: '🪙' }
+    ];
+
+    let appState = {
+      usablePoints: 0,
+      totalPoints: 0,
+      cycleCount: 1, // 何周目か
+      activePartner: null, // { attr: 'fire'|'water'|'forest', expPt: 0, catPts: { power: 0, smart: 0, kind: 0 }, lockedBranch: null }
+      unlockedIds: [], // 図鑑登録済みモンスターID配列
+      hallOfFame: [], // 殿堂入り記録 [ { monsterId, name, attr, branch, cycle, dateStr } ]
+      chores: [],
+      rewards: [],
+      logs: {},
+      rewardHistory: [],
+      muted: false
+    };
+
+    let currentCalYear = new Date().getFullYear();
+    let currentCalMonth = new Date().getMonth();
+    let selectedDetailDate = null;
+    let currentChoreFilter = 'all';
+    let currentZukanAttr = 'fire';
+
+    function getTodayStr() {
+      const d = new Date();
+      return formatDateStr(d.getFullYear(), d.getMonth() + 1, d.getDate());
+    }
+
+    function formatDateStr(y, m, d) {
+      return `${y}-${String(m).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
+    }
+
+    function loadState() {
+      try {
+        const raw = localStorage.getItem(STORAGE_KEY);
+        if (raw) {
+          const p = JSON.parse(raw);
+          appState = {
+            usablePoints: Number(p.usablePoints) || 0,
+            totalPoints: Number(p.totalPoints) || 0,
+            cycleCount: Number(p.cycleCount) || 1,
+            activePartner: p.activePartner || null,
+            unlockedIds: Array.isArray(p.unlockedIds) ? p.unlockedIds : [],
+            hallOfFame: Array.isArray(p.hallOfFame) ? p.hallOfFame : [],
+            chores: Array.isArray(p.chores) && p.chores.length > 0 ? p.chores : [...DEFAULT_CHORES],
+            rewards: Array.isArray(p.rewards) && p.rewards.length > 0 ? p.rewards : [...DEFAULT_REWARDS],
+            logs: p.logs || {},
+            rewardHistory: p.rewardHistory || [],
+            muted: Boolean(p.muted)
+          };
+        } else {
+          appState.chores = [...DEFAULT_CHORES];
+          appState.rewards = [...DEFAULT_REWARDS];
+        }
+      } catch (e) {
+        console.error('Load failed:', e);
+        appState.chores = [...DEFAULT_CHORES];
+        appState.rewards = [...DEFAULT_REWARDS];
+      }
+      SoundFX.muted = appState.muted;
+    }
+
+    function saveState() {
+      try {
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(appState));
+      } catch (e) {
+        console.error('Save failed:', e);
+      }
+    }
+
+    /* =========================================================================
+       4. パートナー育成・ルート分岐・ビジュアル生成ロジック
+       ========================================================================= */
+    function getLevelFromExp(expPt) {
+      let lv = 1;
+      for (const item of LEVEL_THRESHOLDS) {
+        if (expPt >= item.minPt) lv = item.level;
+      }
+      return lv;
+    }
+
+    function getDominantCategory(catPts) {
+      const { power = 0, smart = 0, kind = 0 } = catPts;
+      if (power >= smart && power >= kind) return 'power';
+      if (smart >= power && smart >= kind) return 'smart';
+      return 'kind';
+    }
+
+    function getCurrentMonsterData(partner) {
+      if (!partner) return null;
+      const attr = partner.attr || 'fire';
+      const lv = getLevelFromExp(partner.expPt);
+      const db = MONSTER_DB[attr];
+
+      if (lv <= 4) {
+        return db.common[lv - 1];
+      } else {
+        const branch = partner.lockedBranch || getDominantCategory(partner.catPts);
+        return db.branches[branch][lv - 5];
+      }
+    }
+
+    function unlockMonsterInZukan(monsterId) {
+      if (monsterId && !appState.unlockedIds.includes(monsterId)) {
+        appState.unlockedIds.push(monsterId);
+      }
+    }
+
+    // カスタムSVG＋絵文字を融合したリッチなモンスターカードグラフィック生成
+    function buildMonsterVisualHTML(monster, attr, level, isSilhouette = false) {
+      const meta = ATTR_META[attr] || ATTR_META.fire;
+      const filterStyle = isSilhouette ? 'filter: brightness(0) opacity(0.28);' : '';
+      const scale = 0.78 + (level * 0.025); // レベルが高いほど大きく迫力が出る
+
+      return `
+        <div class="relative w-full h-full flex items-center justify-center" style="${filterStyle}">
+          <svg viewBox="0 0 160 160" class="w-full h-full drop-shadow-md">
+            <!-- ベースサークル -->
+            <circle cx="80" cy="84" r="62" fill="#FFFFFF" stroke="#1E293B" stroke-width="5"/>
+            <circle cx="80" cy="84" r="52" fill="${meta.auraColor}" fill-opacity="0.18"/>
+            <!-- レベルに応じた装飾（翼・王冠・輝き） -->
+            ${level >= 5 ? `<path d="M22 72 L4 48 L16 86 Z M138 72 L156 48 L144 86 Z" fill="${meta.auraColor}" stroke="#1E293B" stroke-width="3.5" stroke-linejoin="round"/>` : ''}
+            ${level >= 8 ? `<polygon points="56,26 66,10 80,22 94,10 104,26" fill="#FACC15" stroke="#1E293B" stroke-width="3.5" stroke-linejoin="round"/>` : ''}
+            ${level === 10 ? `<circle cx="80" cy="84" r="70" fill="none" stroke="#FACC15" stroke-width="4" stroke-dasharray="10 6"/>` : ''}
+          </svg>
+          <div class="absolute inset-0 flex items-center justify-center pointer-events-none" style="transform: scale(${scale});">
+            <span class="text-6xl sm:text-7xl drop-shadow-[0_4px_2px_rgba(0,0,0,0.2)]">${monster.emoji}</span>
+          </div>
+          ${!isSilhouette && monster.subEmoji ? `
+            <span class="absolute bottom-1 right-1 bg-white border-2 border-slate-900 rounded-full px-1.5 py-0.5 text-sm sm:text-base shadow">
+              ${monster.subEmoji}
+            </span>
+          ` : ''}
+        </div>
+      `;
+    }
+
+    function buildAuraSVG(attr, level) {
+      const meta = ATTR_META[attr] || ATTR_META.fire;
+      if (level < 3) return '';
+      return `
+        <svg viewBox="0 0 200 200" class="w-full h-full aura-spin">
+          <polygon points="100,6 122,42 164,28 154,70 192,92 158,120 176,160 134,156 118,194 92,162 56,184 54,142 14,140 36,104 12,70 54,62 56,20 88,42"
+            fill="${meta.auraColor}" fill-opacity="0.22" stroke="${meta.ringColor}" stroke-width="2" stroke-dasharray="6 6"/>
+        </svg>
+      `;
+    }
+
+    // パートナー選択実行
+    window.selectStarterEgg = function(attr) {
+      appState.activePartner = {
+        attr,
+        expPt: 0,
+        catPts: { power: 0, smart: 0, kind: 0 },
+        lockedBranch: null
+      };
+      const firstMonster = MONSTER_DB[attr].common[0];
+      unlockMonsterInZukan(firstMonster.id);
+      saveState();
+
+      closeModal('modal-egg-select');
+      SoundFX.playCoin();
+      updateAllUI();
+      showToast(`${firstMonster.name} と いっしょに ぼうけんスタート！`);
+    };
+
+    function renderMonsterStage() {
+      const p = appState.activePartner;
+      if (!p) {
+        openModal('modal-egg-select');
+        return;
+      }
+
+      const lv = getLevelFromExp(p.expPt);
+      const monster = getCurrentMonsterData(p);
+      const attrMeta = ATTR_META[p.attr];
+
+      // 背景グラデーション更新
+      const card = document.getElementById('monster-stage-card');
+      card.className = `game-box-lg rounded-3xl p-4 mb-5 bg-gradient-to-b ${attrMeta.cardGradient} relative overflow-hidden`;
+
+      document.getElementById('cycle-badge').textContent = `${appState.cycleCount}しゅうめ`;
+      document.getElementById('monster-level-badge').textContent = `Lv.${lv} / 10`;
+
+      const typeBadge = document.getElementById('monster-type-badge');
+      typeBadge.textContent = attrMeta.label;
+      typeBadge.className = `${attrMeta.badgeBg} text-xs font-black px-2.5 py-1 rounded-full border-2 border-slate-900`;
+
+      const routeBadge = document.getElementById('monster-route-badge');
+      if (lv >= 5 && p.lockedBranch) {
+        const bMeta = BRANCH_META[p.lockedBranch];
+        routeBadge.textContent = bMeta.label;
+        routeBadge.className = `bg-white ${bMeta.color} text-xs font-black px-2.5 py-1 rounded-full border-2 border-slate-900`;
+      } else {
+        routeBadge.textContent = '🌱 せいちょう中（Lv.5で分岐）';
+        routeBadge.className = 'bg-white/90 text-slate-800 text-xs font-extrabold px-2.5 py-1 rounded-full border-2 border-slate-900';
+      }
+
+      document.getElementById('monster-aura-bg').innerHTML = buildAuraSVG(p.attr, lv);
+      document.getElementById('monster-visual-container').innerHTML = buildMonsterVisualHTML(monster, p.attr, lv, false);
+      document.getElementById('monster-name').textContent = monster.name;
+      document.getElementById('monster-speech').innerHTML = monster.desc;
+
+      // 経験値ゲージ
+      const nextThreshold = LEVEL_THRESHOLDS.find(t => t.level === lv + 1);
+      const currentThreshold = LEVEL_THRESHOLDS.find(t => t.level === lv);
+      const barFill = document.getElementById('exp-bar-fill');
+      const remText = document.getElementById('exp-remaining-text');
+      const stageLabel = document.getElementById('exp-stage-label');
+      const nextEggCta = document.getElementById('next-egg-cta');
+
+      if (nextThreshold) {
+        const span = nextThreshold.minPt - currentThreshold.minPt;
+        const gained = p.expPt - currentThreshold.minPt;
+        const pct = Math.min(100, Math.max(0, (gained / span) * 100));
+        const rem = nextThreshold.minPt - p.expPt;
+
+        stageLabel.innerHTML = lv === 4 ? `つぎは <span class="text-orange-600 font-black">ルート分岐進化！</span>` : `つぎのレベル（Lv.${lv + 1}）まで`;
+        remText.textContent = `あと ${rem} pt！`;
+        barFill.style.width = `${pct}%`;
+        nextEggCta.classList.add('hidden');
+      } else {
+        stageLabel.textContent = 'さいこうレベル達成！でんどういり！';
+        remText.textContent = 'Lv.10 MAX！';
+        barFill.style.width = '100%';
+        nextEggCta.classList.remove('hidden');
+      }
+
+      // タイプ別バランスバー描画
+      const { power = 0, smart = 0, kind = 0 } = p.catPts;
+      const sumCat = power + smart + kind;
+      document.getElementById('tendency-total-pt').textContent = `いくせい ${p.expPt} pt`;
+      document.getElementById('pt-power').textContent = power;
+      document.getElementById('pt-smart').textContent = smart;
+      document.getElementById('pt-kind').textContent = kind;
+
+      if (sumCat === 0) {
+        document.getElementById('bar-power').style.width = '33.3%';
+        document.getElementById('bar-smart').style.width = '33.4%';
+        document.getElementById('bar-kind').style.width = '33.3%';
+      } else {
+        document.getElementById('bar-power').style.width = `${(power / sumCat) * 100}%`;
+        document.getElementById('bar-smart').style.width = `${(smart / sumCat) * 100}%`;
+        document.getElementById('bar-kind').style.width = `${(kind / sumCat) * 100}%`;
+      }
+
+      // 分岐ヒント表示
+      const hintBox = document.getElementById('branch-hint-box');
+      if (lv < 5) {
+        if (sumCat === 0) {
+          hintBox.innerHTML = `💡 Lv.5になると おおいタイプによって <b>3つのルート</b> に <ruby>進化<rt>しんか</rt></ruby>がわかれるよ！`;
+        } else {
+          const dom = getDominantCategory(p.catPts);
+          const bMeta = BRANCH_META[dom];
+          const futureLv5 = MONSTER_DB[p.attr].branches[dom][0];
+          hintBox.innerHTML = `🔮 いまは <span class="${bMeta.color} font-black">【${bMeta.short}】</span> がトップ！このままだと <b>「${futureLv5.name}」</b> ルートに なりそう！`;
+        }
+      } else {
+        const bMeta = BRANCH_META[p.lockedBranch || 'power'];
+        hintBox.innerHTML = `✨ <span class="${bMeta.color} font-black">${bMeta.label}</span> に 決定！Lv.10の 最終進化をめざそう！`;
+      }
+    }
+
+    /* =========================================================================
+       5. お手伝い記録＆進化判定
+       ========================================================================= */
+    function addChoreRecord(choreId, dateStr = getTodayStr(), eventObj = null) {
+      const chore = appState.chores.find(c => c.id === choreId);
+      if (!chore || !appState.activePartner) return;
+
+      const p = appState.activePartner;
+      const prevLv = getLevelFromExp(p.expPt);
+      const cat = chore.cat || 'power';
+
+      // ポイント＆経験値加算
+      appState.usablePoints += chore.pt;
+      appState.totalPoints += chore.pt;
+      p.expPt += chore.pt;
+      p.catPts[cat] = (p.catPts[cat] || 0) + chore.pt;
+
+      // ログ保存
+      if (!appState.logs[dateStr]) appState.logs[dateStr] = [];
+      appState.logs[dateStr].push({
+        uid: 'log_' + Date.now() + '_' + Math.random().toString(36).slice(2, 6),
+        choreId: chore.id,
+        name: chore.name,
+        pt: chore.pt,
+        cat,
+        icon: chore.icon
+      });
+
+      const newLv = getLevelFromExp(p.expPt);
+      let branchedNow = false;
+
+      // Lv.5到達時にルート確定
+      if (newLv >= 5 && !p.lockedBranch) {
+        p.lockedBranch = getDominantCategory(p.catPts);
+        branchedNow = true;
+      }
+
+      const newMonster = getCurrentMonsterData(p);
+      unlockMonsterInZukan(newMonster.id);
+
+      // Lv.10（殿堂入り）初到達チェック
+      let reachedHallOfFame = false;
+      if (prevLv < 10 && newLv === 10) {
+        reachedHallOfFame = true;
+        appState.hallOfFame.push({
+          monsterId: newMonster.id,
+          name: newMonster.name,
+          emoji: newMonster.emoji,
+          attr: p.attr,
+          branch: p.lockedBranch || 'power',
+          cycle: appState.cycleCount,
+          dateStr: getTodayStr()
+        });
+      }
+
+      saveState();
+      updateAllUI();
+
+      // エフェクト
+      SoundFX.playCoin();
+      bounceMonster();
+
+      if (eventObj) {
+        const rect = eventObj.currentTarget.getBoundingClientRect();
+        spawnFloatingPt(`+${chore.pt}pt!`, rect.left + rect.width / 2, rect.top);
+      } else {
+        showToast(`${chore.icon} ${chore.name} (+${chore.pt}pt) をきろくしたよ！`);
+      }
+
+      // レベルアップ・進化モーダル表示
+      if (newLv > prevLv) {
+        setTimeout(() => showEvolutionModal(newMonster, p.attr, newLv, branchedNow, reachedHallOfFame), 420);
+      }
+    }
+
+    function showEvolutionModal(monster, attr, lv, branchedNow, isHallOfFame) {
+      SoundFX.playFanfare();
+      launchConfetti(isHallOfFame ? 4000 : 2600);
+
+      const badgeTop = document.getElementById('evo-badge-top');
+      const title = document.getElementById('evo-title');
+      const branchNotice = document.getElementById('evo-branch-notice');
+      const actionArea = document.getElementById('evo-action-buttons');
+
+      if (isHallOfFame) {
+        badgeTop.textContent = '👑 最終進化＆でんどういり！ 👑';
+        title.textContent = `「${monster.name}」が かんせいした！`;
+      } else if (lv === 2) {
+        badgeTop.textContent = '🐣 たんじょう！ 🐣';
+        title.textContent = 'タマゴから うまれたよ！';
+      } else {
+        badgeTop.textContent = `🎉 Lv.${lv} に 進化！ 🎉`;
+        title.textContent = `「${monster.name}」に 進化した！`;
+      }
+
+      if (branchedNow && appState.activePartner?.lockedBranch) {
+        const bMeta = BRANCH_META[appState.activePartner.lockedBranch];
+        branchNotice.textContent = `✨ おてつだいの傾向から【${bMeta.label}】に 進化がわかれたぞ！`;
+        branchNotice.classList.remove('hidden');
+      } else {
+        branchNotice.classList.add('hidden');
+      }
+
+      document.getElementById('evo-visual-box').innerHTML = buildMonsterVisualHTML(monster, attr, lv, false);
+      document.getElementById('evo-monster-name').textContent = `Lv.${lv} ${monster.name}`;
+      document.getElementById('evo-monster-desc').textContent = monster.desc;
+
+      if (isHallOfFame) {
+        actionArea.innerHTML = `
+          <button type="button" onclick="startNextCycleEgg()" class="game-btn w-full bg-gradient-to-r from-yellow-400 to-orange-400 text-slate-900 font-black py-3 rounded-2xl text-base">
+            🥚 あたらしいタマゴを えらぶ！（${appState.cycleCount + 1}しゅうめへ）
+          </button>
+          <button type="button" onclick="closeModal('modal-evolution')" class="game-btn w-full bg-slate-200 text-slate-800 font-black py-2 rounded-2xl text-xs">
+            いまのモンスターを もうすこし見る
+          </button>
+        `;
+      } else {
+        actionArea.innerHTML = `
+          <button type="button" onclick="closeModal('modal-evolution')" class="game-btn w-full bg-green-500 text-white font-black py-3 rounded-2xl text-base">
+            やったー！つづける
+          </button>
+        `;
+      }
+
+      openModal('modal-evolution');
+    }
+
+    window.startNextCycleEgg = function() {
+      closeModal('modal-evolution');
+      appState.cycleCount += 1;
+      appState.activePartner = null;
+      saveState();
+      openModal('modal-egg-select');
+    };
+
+    function removeChoreRecord(dateStr, logUid) {
+      const dayLogs = appState.logs[dateStr];
+      if (!dayLogs) return;
+
+      const idx = dayLogs.findIndex(item => item.uid === logUid);
+      if (idx === -1) return;
+
+      const target = dayLogs[idx];
+      dayLogs.splice(idx, 1);
+      if (dayLogs.length === 0) delete appState.logs[dateStr];
+
+      appState.usablePoints = Math.max(0, appState.usablePoints - target.pt);
+      appState.totalPoints = Math.max(0, appState.totalPoints - target.pt);
+
+      if (appState.activePartner) {
+        const p = appState.activePartner;
+        p.expPt = Math.max(0, p.expPt - target.pt);
+        const cat = target.cat || 'power';
+        p.catPts[cat] = Math.max(0, (p.catPts[cat] || 0) - target.pt);
+        if (getLevelFromExp(p.expPt) < 5) {
+          p.lockedBranch = null;
+        }
+      }
+
+      saveState();
+      SoundFX.playCancel();
+      updateAllUI();
+      showToast(`「${target.name}」を とりけしました`);
+
+      if (selectedDetailDate === dateStr) {
+        renderDayDetailModal(dateStr);
+      }
+    }
+
+    function bounceMonster() {
+      const el = document.getElementById('monster-visual-container');
+      el.classList.remove('monster-jump');
+      void el.offsetWidth;
+      el.classList.add('monster-jump');
+    }
+
+    function spawnFloatingPt(text, x, y) {
+      const el = document.createElement('div');
+      el.className = 'floating-pt';
+      el.textContent = text;
+      el.style.left = `${Math.min(window.innerWidth - 90, Math.max(10, x - 35))}px`;
+      el.style.top = `${Math.max(60, y)}px`;
+      document.body.appendChild(el);
+      setTimeout(() => el.remove(), 1000);
+    }
+
+    /* =========================================================================
+       6. 各タブ画面描画（お手伝い・カレンダー・ごほうび・図鑑）
+       ========================================================================= */
+    function updateAllUI() {
+      document.getElementById('usable-points').textContent = appState.usablePoints;
+      document.getElementById('total-points').textContent = appState.totalPoints;
+
+      renderMonsterStage();
+      renderChoresTab();
+      renderCalendar();
+      renderRewardsTab();
+      renderZukanTab();
+    }
+
+    function renderChoresTab() {
+      const todayStr = getTodayStr();
+      const d = new Date();
+      const weekdays = ['日', '月', '火', '水', '木', '金', '土'];
+      document.getElementById('today-date-label').textContent =
+        `${d.getMonth() + 1}月${d.getDate()}日(${weekdays[d.getDay()]})`;
+
+      const todayLogs = appState.logs[todayStr] || [];
+      const counts = {};
+      todayLogs.forEach(item => {
+        counts[item.choreId] = (counts[item.choreId] || 0) + 1;
+      });
+
+      const grid = document.getElementById('chore-list-grid');
+      grid.innerHTML = '';
+
+      const filteredChores = currentChoreFilter === 'all'
+        ? appState.chores
+        : appState.chores.filter(c => (c.cat || 'power') === currentChoreFilter);
+
+      filteredChores.forEach(chore => {
+        const count = counts[chore.id] || 0;
+        const cat = chore.cat || 'power';
+        const catTag = cat === 'power'
+          ? { text: '🔥パワー', cls: 'bg-red-100 text-red-700 border-red-300' }
+          : cat === 'smart'
+          ? { text: '💧ちえ', cls: 'bg-blue-100 text-blue-700 border-blue-300' }
+          : { text: '🌿やさしさ', cls: 'bg-green-100 text-green-700 border-green-300' };
+
+        const card = document.createElement('button');
+        card.type = 'button';
+        card.className = 'game-btn bg-white rounded-2xl p-3 flex flex-col items-center text-center relative active:bg-yellow-100';
+        card.innerHTML = `
+          ${count > 0 ? `<span class="absolute -top-2 -right-2 bg-green-500 text-white border-2 border-slate-900 rounded-full text-[11px] font-black px-2 py-0.5 shadow">今日 ${count}回</span>` : ''}
+          <span class="text-[10px] font-black px-2 py-0.5 rounded-full border ${catTag.cls} mb-1">${catTag.text}</span>
+          <div class="text-4xl my-1">${chore.icon}</div>
+          <div class="text-xs sm:text-sm font-black text-slate-900 leading-snug mb-2">${escapeHTML(chore.name)}</div>
+          <div class="mt-auto bg-orange-500 text-white text-xs sm:text-sm font-black px-3 py-0.5 rounded-full border-2 border-slate-900">
+            +${chore.pt} pt
+          </div>
+        `;
+        card.addEventListener('click', (e) => addChoreRecord(chore.id, todayStr, e));
+        grid.appendChild(card);
+      });
+
+      // 今日の記録
+      const logContainer = document.getElementById('today-log-list');
+      const sumPt = todayLogs.reduce((acc, cur) => acc + cur.pt, 0);
+      document.getElementById('today-earned-sum').textContent = `合計 ${sumPt} pt`;
+
+      if (todayLogs.length === 0) {
+        logContainer.innerHTML = `<div class="text-slate-500 text-xs sm:text-sm font-bold text-center py-3">まだ きろくがありません。上のボタンを押してみよう！</div>`;
+      } else {
+        logContainer.innerHTML = todayLogs.slice().reverse().map(item => `
+          <div class="flex items-center justify-between py-2">
+            <div class="flex items-center gap-2 font-extrabold text-xs sm:text-sm">
+              <span class="text-xl">${item.icon}</span>
+              <span>${escapeHTML(item.name)}</span>
+              <span class="text-orange-600">(+${item.pt}pt)</span>
+            </div>
+            <button type="button" onclick="removeChoreRecord('${todayStr}', '${item.uid}')" class="bg-red-100 text-red-700 border-2 border-red-400 rounded-xl px-2.5 py-1 text-xs font-black active:bg-red-200">
+              とりけす
+            </button>
+          </div>
+        `).join('');
+      }
+    }
+
+    function renderCalendar() {
+      document.getElementById('cal-month-title').textContent = `${currentCalYear}年 ${currentCalMonth + 1}月`;
+      const grid = document.getElementById('cal-grid');
+      grid.innerHTML = '';
+
+      const firstDay = new Date(currentCalYear, currentCalMonth, 1).getDay();
+      const daysInMonth = new Date(currentCalYear, currentCalMonth + 1, 0).getDate();
+      const todayStr = getTodayStr();
+
+      for (let i = 0; i < firstDay; i++) {
+        const empty = document.createElement('div');
+        grid.appendChild(empty);
+      }
+
+      for (let day = 1; day <= daysInMonth; day++) {
+        const dateStr = formatDateStr(currentCalYear, currentCalMonth + 1, day);
+        const dow = new Date(currentCalYear, currentCalMonth, day).getDay();
+        const logs = appState.logs[dateStr] || [];
+        const dayPt = logs.reduce((s, x) => s + x.pt, 0);
+
+        const cell = document.createElement('button');
+        cell.type = 'button';
+        let bgCls = dayPt > 0 ? 'bg-yellow-100 border-yellow-500' : 'bg-slate-50 border-slate-300';
+        if (dateStr === todayStr) bgCls += ' ring-2 ring-orange-500';
+
+        const numColor = dow === 0 ? 'text-red-500' : dow === 6 ? 'text-blue-500' : 'text-slate-800';
+
+        cell.className = `aspect-[1/1.2] border-2 ${bgCls} rounded-xl p-1 flex flex-col items-center justify-between active:scale-95 transition`;
+        cell.innerHTML = `
+          <span class="text-xs font-black ${numColor}">${day}</span>
+          <span class="text-sm leading-none">${dayPt > 0 ? '⭐' : ''}</span>
+          ${dayPt > 0 ? `<span class="bg-green-500 text-white text-[10px] font-black px-1.5 rounded-full">+${dayPt}</span>` : '<span class="h-3.5"></span>'}
+        `;
+
+        cell.addEventListener('click', () => {
+          selectedDetailDate = dateStr;
+          renderDayDetailModal(dateStr);
+          openModal('modal-day-detail');
+        });
+
+        grid.appendChild(cell);
+      }
+    }
+
+    function renderDayDetailModal(dateStr) {
+      const [y, m, d] = dateStr.split('-').map(Number);
+      document.getElementById('day-detail-title').textContent = `${y}年${m}月${d}日のきろく`;
+
+      const logs = appState.logs[dateStr] || [];
+      const logsEl = document.getElementById('day-detail-logs');
+
+      if (logs.length === 0) {
+        logsEl.innerHTML = `<div class="text-center text-slate-500 text-xs sm:text-sm font-bold py-3">この日のきろくはありません</div>`;
+      } else {
+        logsEl.innerHTML = logs.map(item => `
+          <div class="flex items-center justify-between py-2">
+            <div class="flex items-center gap-2 text-xs sm:text-sm font-extrabold">
+              <span class="text-lg">${item.icon}</span>
+              <span>${escapeHTML(item.name)} (+${item.pt}pt)</span>
+            </div>
+            <button type="button" onclick="removeChoreRecord('${dateStr}', '${item.uid}')" class="bg-red-100 text-red-700 border border-red-400 rounded-lg px-2 py-0.5 text-xs font-black">
+              さくじょ
+            </button>
+          </div>
+        `).join('');
+      }
+
+      const addBtnsEl = document.getElementById('day-detail-add-btns');
+      addBtnsEl.innerHTML = appState.chores.map(c => `
+        <button type="button" onclick="addChoreRecord('${c.id}', '${dateStr}'); renderDayDetailModal('${dateStr}');" class="bg-amber-50 border-2 border-slate-900 rounded-xl px-2.5 py-1 text-xs font-black active:bg-amber-200">
+          ${c.icon} ${escapeHTML(c.name)} (+${c.pt}pt)
+        </button>
+      `).join('');
+    }
+
+    function renderRewardsTab() {
+      const grid = document.getElementById('reward-list-grid');
+      grid.innerHTML = '';
+
+      appState.rewards.forEach(reward => {
+        const canAfford = appState.usablePoints >= reward.cost;
+        const card = document.createElement('div');
+        card.className = 'game-box bg-gradient-to-b from-white to-yellow-50 rounded-2xl p-3 flex flex-col items-center text-center';
+        card.innerHTML = `
+          <div class="text-4xl my-1">${reward.icon}</div>
+          <div class="text-xs sm:text-sm font-black text-slate-900 mb-2.5 leading-snug">${escapeHTML(reward.name)}</div>
+          <button type="button" ${canAfford ? '' : 'disabled'} class="game-btn w-full ${canAfford ? 'bg-yellow-400 text-slate-900' : 'bg-slate-200 text-slate-500'} font-black py-2 px-2 rounded-xl text-xs mt-auto">
+            ${canAfford ? `✨ ${reward.cost}pt でこうかん` : `あと ${reward.cost - appState.usablePoints}pt`}
+          </button>
+        `;
+        if (canAfford) {
+          card.querySelector('button').addEventListener('click', () => openRewardConfirm(reward));
+        }
+        grid.appendChild(card);
+      });
+
+      const histEl = document.getElementById('reward-history-list');
+      if (appState.rewardHistory.length === 0) {
+        histEl.innerHTML = `<div class="text-slate-500 text-xs sm:text-sm font-bold text-center py-3">まだ こうかんした ごほうびはありません</div>`;
+      } else {
+        histEl.innerHTML = appState.rewardHistory.slice().reverse().slice(0, 15).map(h => `
+          <div class="flex items-center justify-between py-2">
+            <div class="flex items-center gap-2">
+              <span class="text-2xl">${h.icon}</span>
+              <div>
+                <div class="text-xs sm:text-sm font-black">${escapeHTML(h.name)}</div>
+                <div class="text-[11px] font-bold text-slate-500">${h.dateStr} (${h.cost}pt)</div>
+              </div>
+            </div>
+            <span class="bg-green-100 text-green-700 border border-green-400 px-2 py-0.5 rounded-lg text-[11px] font-black">ゲット済</span>
+          </div>
+        `).join('');
+      }
+    }
+
+    function openRewardConfirm(reward) {
+      document.getElementById('reward-modal-title').innerHTML = `ごほうびと <ruby>交換<rt>こうかん</rt></ruby>する？`;
+      document.getElementById('reward-modal-body').innerHTML = `
+        <div class="text-5xl my-2">${reward.icon}</div>
+        <div class="text-lg font-black mb-1">${escapeHTML(reward.name)}</div>
+        <p class="text-xs sm:text-sm font-extrabold text-orange-600 mb-4">
+          つかえるポイントを ${reward.cost}pt つかいます。<br>
+          <span class="text-slate-500 text-xs">（※るいけいポイントと モンスターのレベルは へりません）</span>
+        </p>
+        <div class="flex gap-2">
+          <button type="button" onclick="closeModal('modal-reward-confirm')" class="game-btn flex-1 bg-slate-200 font-black py-2.5 rounded-2xl">やめる</button>
+          <button type="button" id="confirm-exchange-exec-btn" class="game-btn flex-1 bg-green-500 text-white font-black py-2.5 rounded-2xl">こうかんする！</button>
+        </div>
+      `;
+      openModal('modal-reward-confirm');
+
+      document.getElementById('confirm-exchange-exec-btn').onclick = () => {
+        if (appState.usablePoints < reward.cost) return;
+        appState.usablePoints -= reward.cost;
+        appState.rewardHistory.push({
+          uid: 'rew_' + Date.now(),
+          name: reward.name,
+          cost: reward.cost,
+          icon: reward.icon,
+          dateStr: getTodayStr()
+        });
+        saveState();
+        updateAllUI();
+
+        SoundFX.playFanfare();
+        launchConfetti(2600);
+
+        document.getElementById('reward-modal-title').textContent = '🎉 ごほうびチケット獲得！';
+        document.getElementById('reward-modal-body').innerHTML = `
+          <div class="ticket-pattern border-4 border-dashed border-slate-900 rounded-2xl p-4 my-3">
+            <div class="text-xs font-black mb-1">★ ごほうびチケット ★</div>
+            <div class="text-5xl my-1">${reward.icon}</div>
+            <div class="text-lg font-black">${escapeHTML(reward.name)}</div>
+          </div>
+          <p class="text-xs sm:text-sm font-extrabold mb-3">おうちのひとに この画面を みせてね！</p>
+          <button type="button" onclick="closeModal('modal-reward-confirm')" class="game-btn w-full bg-green-500 text-white font-black py-3 rounded-2xl">
+            やったー！とじる
+          </button>
+        `;
+      };
+    }
+
+    function renderZukanTab() {
+      // 全39種類中の発見数カウント
+      document.getElementById('zukan-progress-badge').textContent = `発見数: ${appState.unlockedIds.length} / 39`;
+
+      // 殿堂入りリスト
+      const hofEl = document.getElementById('hall-of-fame-list');
+      document.getElementById('hof-count').textContent = `${appState.hallOfFame.length}ひき`;
+
+      if (appState.hallOfFame.length === 0) {
+        hofEl.innerHTML = `<div class="text-xs font-bold text-amber-800/75 py-2">Lv.10（最終進化）まで そだてると ここに 殿堂入りパートナーが ならぶよ！</div>`;
+      } else {
+        hofEl.innerHTML = appState.hallOfFame.map(h => `
+          <div class="shrink-0 bg-white border-2 border-slate-900 rounded-2xl p-2 text-center w-24 shadow-sm">
+            <div class="text-[10px] font-black bg-yellow-300 rounded-full mb-1">${h.cycle}しゅうめ</div>
+            <div class="text-3xl my-0.5">${h.emoji}</div>
+            <div class="text-[11px] font-black leading-tight truncate">${escapeHTML(h.name)}</div>
+          </div>
+        `).join('');
+      }
+
+      // 選択中の属性の図鑑（共通Lv1〜4 ＋ 3分岐Lv5〜10）
+      const db = MONSTER_DB[currentZukanAttr];
+      const container = document.getElementById('zukan-content-area');
+
+      const renderCard = (m, routeName) => {
+        const unlocked = appState.unlockedIds.includes(m.id);
+        return `
+          <button type="button" ${unlocked ? `onclick="openZukanDetail('${m.id}', '${currentZukanAttr}', '${routeName}')"` : ''}
+            class="border-2 border-slate-900 rounded-2xl p-2 text-center ${unlocked ? 'bg-white shadow-[0_3px_0_#0f172a] active:translate-y-0.5' : 'bg-slate-200/80 opacity-80'}">
+            <div class="text-[10px] font-black text-slate-600 mb-0.5">Lv.${m.level}</div>
+            <div class="w-16 h-16 mx-auto">
+              ${buildMonsterVisualHTML(m, currentZukanAttr, m.level, !unlocked)}
+            </div>
+            <div class="text-[11px] font-black mt-1 truncate ${unlocked ? 'text-slate-900' : 'text-slate-500'}">
+              ${unlocked ? m.name : '？？？'}
+            </div>
+          </button>
+        `;
+      };
+
+      container.innerHTML = `
+        <div class="game-box bg-white rounded-2xl p-3">
+          <div class="text-xs sm:text-sm font-black mb-2 text-slate-800">🌱 ようねん期・せいちょう期（Lv.1 〜 Lv.4）</div>
+          <div class="grid grid-cols-4 gap-2">
+            ${db.common.map(m => renderCard(m, '共通せいちょう期')).join('')}
+          </div>
+        </div>
+
+        ${['power', 'smart', 'kind'].map(bKey => {
+          const bMeta = BRANCH_META[bKey];
+          return `
+            <div class="game-box bg-white rounded-2xl p-3">
+              <div class="text-xs sm:text-sm font-black mb-2 ${bMeta.color}">
+                ${bMeta.label}（Lv.5 〜 Lv.10 最終進化）
+              </div>
+              <div class="grid grid-cols-3 gap-2">
+                ${db.branches[bKey].map(m => renderCard(m, bMeta.label)).join('')}
+              </div>
+            </div>
+          `;
+        }).join('')}
+      `;
+    }
+
+    window.openZukanDetail = function(monsterId, attr, routeName) {
+      const db = MONSTER_DB[attr];
+      const all = [...db.common, ...db.branches.power, ...db.branches.smart, ...db.branches.kind];
+      const m = all.find(x => x.id === monsterId);
+      if (!m) return;
+
+      document.getElementById('zd-level-badge').textContent = `Lv.${m.level} / ${ATTR_META[attr].label}`;
+      document.getElementById('zd-visual-box').innerHTML = buildMonsterVisualHTML(m, attr, m.level, false);
+      document.getElementById('zd-name').textContent = m.name;
+      document.getElementById('zd-route-tag').textContent = routeName;
+      document.getElementById('zd-desc').textContent = m.desc;
+      openModal('modal-zukan-detail');
+    };
+
+    /* =========================================================================
+       7. 保護者設定（追加・編集・削除・初期化）
+       ========================================================================= */
+    const CHORE_EMOJIS = ['🛁', '🗑️', '👟', '🍽️', '👕', '🎒', '🥢', '💖', '🧹', '🪴', '🐶', '📚'];
+    const REWARD_EMOJIS = ['🍨', '🎮', '🌙', '🪙', '🍫', '📺', '🎡', '📖', '⚽', '🎁', '🍰', '🎟️'];
+
+    let selectedChoreEmoji = CHORE_EMOJIS[0];
+    let selectedRewardEmoji = REWARD_EMOJIS[0];
+    let gateExpectedAnswer = 0;
+
+    function openParentGate() {
+      const a = Math.floor(Math.random() * 6) + 4;
+      const b = Math.floor(Math.random() * 6) + 4;
+      gateExpectedAnswer = a * b;
+      document.getElementById('gate-question').textContent = `${a} × ${b} = ？`;
+      document.getElementById('gate-answer-input').value = '';
+      openModal('modal-parent-gate');
+    }
+
+    function initSettingsUI() {
+      renderEmojiPicker('chore-emoji-picker', CHORE_EMOJIS, selectedChoreEmoji, em => selectedChoreEmoji = em);
+      renderEmojiPicker('reward-emoji-picker', REWARD_EMOJIS, selectedRewardEmoji, em => selectedRewardEmoji = em);
+      renderSettingsLists();
+    }
+
+    function renderEmojiPicker(containerId, list, current, onSelect) {
+      const el = document.getElementById(containerId);
+      el.innerHTML = list.map(em => `
+        <button type="button" class="text-xl p-1.5 border-2 rounded-xl ${em === current ? 'border-orange-500 bg-orange-100 scale-105' : 'border-slate-300 bg-white'}">
+          ${em}
+        </button>
+      `).join('');
+
+      el.querySelectorAll('button').forEach((btn, idx) => {
+        btn.addEventListener('click', () => {
+          onSelect(list[idx]);
+          renderEmojiPicker(containerId, list, list[idx], onSelect);
+        });
+      });
+    }
+
+    function renderSettingsLists() {
+      const cList = document.getElementById('settings-chore-list');
+      cList.innerHTML = appState.chores.map(c => {
+        const catIcon = c.cat === 'smart' ? '💧' : c.cat === 'kind' ? '🌿' : '🔥';
+        return `
+          <div class="flex items-center justify-between bg-slate-50 border-2 border-slate-200 rounded-xl p-2">
+            <div class="text-xs sm:text-sm font-extrabold">
+              ${c.icon} ${escapeHTML(c.name)} <span class="text-orange-600">(${c.pt}pt / ${catIcon})</span>
+            </div>
+            <div class="flex gap-1.5">
+              <button type="button" onclick="startEditChore('${c.id}')" class="bg-sky-100 border border-slate-900 rounded-lg px-2 py-1 text-xs font-black">編集</button>
+              <button type="button" onclick="deleteChore('${c.id}')" class="bg-red-100 text-red-700 border border-red-400 rounded-lg px-2 py-1 text-xs font-black">削除</button>
+            </div>
+          </div>
+        `;
+      }).join('');
+
+      const rList = document.getElementById('settings-reward-list');
+      rList.innerHTML = appState.rewards.map(r => `
+        <div class="flex items-center justify-between bg-slate-50 border-2 border-slate-200 rounded-xl p-2">
+          <div class="text-xs sm:text-sm font-extrabold">
+            ${r.icon} ${escapeHTML(r.name)} <span class="text-blue-600">(${r.cost}pt)</span>
+          </div>
+          <div class="flex gap-1.5">
+            <button type="button" onclick="startEditReward('${r.id}')" class="bg-sky-100 border border-slate-900 rounded-lg px-2 py-1 text-xs font-black">編集</button>
+            <button type="button" onclick="deleteReward('${r.id}')" class="bg-red-100 text-red-700 border border-red-400 rounded-lg px-2 py-1 text-xs font-black">削除</button>
+          </div>
+        </div>
+      `).join('');
+    }
+
+    window.startEditChore = function(id) {
+      const t = appState.chores.find(c => c.id === id);
+      if (!t) return;
+      document.getElementById('edit-chore-id').value = t.id;
+      document.getElementById('input-chore-name').value = t.name;
+      document.getElementById('input-chore-pt').value = t.pt;
+      document.getElementById('input-chore-cat').value = t.cat || 'power';
+      selectedChoreEmoji = t.icon;
+      renderEmojiPicker('chore-emoji-picker', CHORE_EMOJIS, selectedChoreEmoji, em => selectedChoreEmoji = em);
+      document.getElementById('chore-form-heading').textContent = '✏️ お手伝いを編集する';
+      document.getElementById('cancel-chore-edit-btn').classList.remove('hidden');
+    };
+
+    window.deleteChore = function(id) {
+      if (appState.chores.length <= 1) {
+        showToast('おてつだいは 1つ以上 のこしてください');
+        return;
+      }
+      appState.chores = appState.chores.filter(c => c.id !== id);
+      saveState();
+      renderSettingsLists();
+      updateAllUI();
+      showToast('削除しました');
+    };
+
+    window.startEditReward = function(id) {
+      const t = appState.rewards.find(r => r.id === id);
+      if (!t) return;
+      document.getElementById('edit-reward-id').value = t.id;
+      document.getElementById('input-reward-name').value = t.name;
+      document.getElementById('input-reward-cost').value = t.cost;
+      selectedRewardEmoji = t.icon;
+      renderEmojiPicker('reward-emoji-picker', REWARD_EMOJIS, selectedRewardEmoji, em => selectedRewardEmoji = em);
+      document.getElementById('reward-form-heading').textContent = '✏️ ごほうびを編集する';
+      document.getElementById('cancel-reward-edit-btn').classList.remove('hidden');
+    };
+
+    window.deleteReward = function(id) {
+      if (appState.rewards.length <= 1) {
+        showToast('ごほうびは 1つ以上 のこしてください');
+        return;
+      }
+      appState.rewards = appState.rewards.filter(r => r.id !== id);
+      saveState();
+      renderSettingsLists();
+      updateAllUI();
+      showToast('削除しました');
+    };
+
+    function resetChoreForm() {
+      document.getElementById('edit-chore-id').value = '';
+      document.getElementById('input-chore-name').value = '';
+      document.getElementById('input-chore-pt').value = 2;
+      document.getElementById('input-chore-cat').value = 'power';
+      document.getElementById('chore-form-heading').innerHTML = '➕ 新しいお<ruby>手伝<rt>てつだ</rt></ruby>いをついか';
+      document.getElementById('cancel-chore-edit-btn').classList.add('hidden');
+    }
+
+    function resetRewardForm() {
+      document.getElementById('edit-reward-id').value = '';
+      document.getElementById('input-reward-name').value = '';
+      document.getElementById('input-reward-cost').value = 10;
+      document.getElementById('reward-form-heading').textContent = '➕ 新しいごほうびをついか';
+      document.getElementById('cancel-reward-edit-btn').classList.add('hidden');
+    }
+
+    /* =========================================================================
+       8. 紙吹雪（Confetti）＆ユーティリティ
+       ========================================================================= */
+    function launchConfetti(durationMs = 2500) {
+      const canvas = document.getElementById('confetti-canvas');
+      const ctx = canvas.getContext('2d');
+      canvas.width = window.innerWidth;
+      canvas.height = window.innerHeight;
+
+      const colors = ['#ef4444', '#f97316', '#eab308', '#22c55e', '#3b82f6', '#ec4899'];
+      const particles = Array.from({ length: 95 }, () => ({
+        x: Math.random() * canvas.width,
+        y: Math.random() * -canvas.height,
+        w: Math.random() * 10 + 6,
+        h: Math.random() * 6 + 4,
+        color: colors[Math.floor(Math.random() * colors.length)],
+        vy: Math.random() * 4 + 2.8,
+        vx: (Math.random() - 0.5) * 3,
+        rot: Math.random() * 360,
+        vRot: (Math.random() - 0.5) * 10
+      }));
+
+      const endTime = Date.now() + durationMs;
+
+      function frame() {
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        particles.forEach(p => {
+          p.x += p.vx;
+          p.y += p.vy;
+          p.rot += p.vRot;
+
+          ctx.save();
+          ctx.translate(p.x, p.y);
+          ctx.rotate((p.rot * Math.PI) / 180);
+          ctx.fillStyle = p.color;
+          ctx.fillRect(-p.w / 2, -p.h / 2, p.w, p.h);
+          ctx.restore();
+        });
+
+        if (Date.now() < endTime) {
+          requestAnimationFrame(frame);
+        } else {
+          ctx.clearRect(0, 0, canvas.width, canvas.height);
+        }
+      }
+      requestAnimationFrame(frame);
+    }
+
+    function openModal(id) {
+      const el = document.getElementById(id);
+      el.classList.remove('hidden');
+      el.classList.add('flex');
+    }
+
+    window.closeModal = function(id) {
+      const el = document.getElementById(id);
+      el.classList.add('hidden');
+      el.classList.remove('flex');
+    };
+
+    let toastTimer = null;
+    function showToast(msg) {
+      const el = document.getElementById('toast');
+      el.textContent = msg;
+      el.classList.remove('opacity-0', '-translate-y-6');
+      el.classList.add('opacity-100', 'translate-y-0');
+      clearTimeout(toastTimer);
+      toastTimer = setTimeout(() => {
+        el.classList.add('opacity-0', '-translate-y-6');
+        el.classList.remove('opacity-100', 'translate-y-0');
+      }, 2300);
+    }
+
+    function escapeHTML(str) {
+      return String(str)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#39;');
+    }
+
+    /* =========================================================================
+       9. イベントリスナー初期化
+       ========================================================================= */
+    document.addEventListener('DOMContentLoaded', () => {
+      loadState();
+      initSettingsUI();
+
+      // 初回または次周回でパートナー未選択ならタマゴ選択モーダルを表示
+      if (!appState.activePartner) {
+        openModal('modal-egg-select');
+      } else {
+        const curM = getCurrentMonsterData(appState.activePartner);
+        if (curM) unlockMonsterInZukan(curM.id);
+        updateAllUI();
+      }
+
+      // 次のタマゴを選ぶCTAボタン
+      document.getElementById('start-next-egg-btn').addEventListener('click', () => {
+        window.startNextCycleEgg();
+      });
+
+      // ミュート切替
+      const soundBtn = document.getElementById('sound-toggle-btn');
+      soundBtn.textContent = appState.muted ? '🔇' : '🔊';
+      soundBtn.addEventListener('click', () => {
+        appState.muted = !appState.muted;
+        SoundFX.muted = appState.muted;
+        soundBtn.textContent = appState.muted ? '🔇' : '🔊';
+        saveState();
+        if (!appState.muted) SoundFX.playCoin();
+      });
+
+      // モンスタータップ反応
+      document.getElementById('monster-tap-area').addEventListener('click', () => {
+        if (!appState.activePartner) return;
+        const lv = getLevelFromExp(appState.activePartner.expPt);
+        SoundFX.playMonsterCry(lv);
+        bounceMonster();
+      });
+
+      // お手伝いカテゴリフィルター
+      document.querySelectorAll('.chore-filter-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+          document.querySelectorAll('.chore-filter-btn').forEach(b => {
+            b.classList.remove('bg-slate-900', 'text-white');
+            b.classList.add('bg-white');
+          });
+          btn.classList.remove('bg-white');
+          btn.classList.add('bg-slate-900', 'text-white');
+          currentChoreFilter = btn.dataset.filter;
+          renderChoresTab();
+        });
+      });
+
+      // 下部タブ切り替え
+      document.querySelectorAll('.nav-item').forEach(btn => {
+        btn.addEventListener('click', () => {
+          document.querySelectorAll('.nav-item').forEach(b => {
+            b.classList.remove('active', 'bg-yellow-300', 'text-slate-900', 'border-2', 'border-slate-900', 'font-black');
+            b.classList.add('text-slate-500', 'font-extrabold');
+          });
+          btn.classList.remove('text-slate-500', 'font-extrabold');
+          btn.classList.add('active', 'bg-yellow-300', 'text-slate-900', 'border-2', 'border-slate-900', 'font-black');
+
+          const targetTab = btn.dataset.tab;
+          document.querySelectorAll('.tab-section').forEach(sec => {
+            sec.classList.toggle('hidden', sec.id !== targetTab);
+          });
+
+          if (targetTab === 'tab-calendar') renderCalendar();
+          if (targetTab === 'tab-rewards') renderRewardsTab();
+          if (targetTab === 'tab-zukan') renderZukanTab();
+        });
+      });
+
+      // 図鑑の属性タブ切り替え
+      document.querySelectorAll('.zukan-attr-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+          currentZukanAttr = btn.dataset.attr;
+          document.querySelectorAll('.zukan-attr-btn').forEach(b => {
+            const attr = b.dataset.attr;
+            if (attr === currentZukanAttr) {
+              b.className = `zukan-attr-btn game-btn ${attr === 'fire' ? 'bg-red-500' : attr === 'water' ? 'bg-blue-500' : 'bg-green-600'} text-white text-xs sm:text-sm font-black py-2 rounded-xl`;
+            } else {
+              b.className = `zukan-attr-btn game-btn bg-white ${attr === 'fire' ? 'text-red-600' : attr === 'water' ? 'text-blue-600' : 'text-green-600'} text-xs sm:text-sm font-black py-2 rounded-xl`;
+            }
+          });
+          renderZukanTab();
+        });
+      });
+
+      // カレンダー月移動
+      document.getElementById('cal-prev-btn').addEventListener('click', () => {
+        currentCalMonth--;
+        if (currentCalMonth < 0) { currentCalMonth = 11; currentCalYear--; }
+        renderCalendar();
+      });
+
+      document.getElementById('cal-next-btn').addEventListener('click', () => {
+        currentCalMonth++;
+        if (currentCalMonth > 11) { currentCalMonth = 0; currentCalYear++; }
+        renderCalendar();
+      });
+
+      document.getElementById('cal-today-btn').addEventListener('click', () => {
+        const now = new Date();
+        currentCalYear = now.getFullYear();
+        currentCalMonth = now.getMonth();
+        renderCalendar();
+      });
+
+      // 設定ボタン（保護者ゲート）
+      document.getElementById('open-settings-btn').addEventListener('click', openParentGate);
+
+      document.getElementById('gate-submit-btn').addEventListener('click', () => {
+        const val = Number(document.getElementById('gate-answer-input').value);
+        if (val === gateExpectedAnswer) {
+          closeModal('modal-parent-gate');
+          renderSettingsLists();
+          openModal('modal-settings');
+        } else {
+          showToast('こたえが ちがうよ！もういちど けいさんしてね');
+        }
+      });
+
+      // 設定内タブ切替
+      document.getElementById('set-tab-chores').addEventListener('click', () => {
+        document.getElementById('settings-chores-panel').classList.remove('hidden');
+        document.getElementById('settings-rewards-panel').classList.add('hidden');
+        document.getElementById('set-tab-chores').classList.replace('bg-sky-100', 'bg-yellow-300');
+        document.getElementById('set-tab-rewards').classList.replace('bg-yellow-300', 'bg-sky-100');
+      });
+
+      document.getElementById('set-tab-rewards').addEventListener('click', () => {
+        document.getElementById('settings-chores-panel').classList.add('hidden');
+        document.getElementById('settings-rewards-panel').classList.remove('hidden');
+        document.getElementById('set-tab-rewards').classList.replace('bg-sky-100', 'bg-yellow-300');
+        document.getElementById('set-tab-chores').classList.replace('bg-yellow-300', 'bg-sky-100');
+      });
+
+      // お手伝い保存
+      document.getElementById('save-chore-btn').addEventListener('click', () => {
+        const name = document.getElementById('input-chore-name').value.trim();
+        const pt = Math.max(1, Number(document.getElementById('input-chore-pt').value) || 1);
+        const cat = document.getElementById('input-chore-cat').value || 'power';
+        const editId = document.getElementById('edit-chore-id').value;
+
+        if (!name) {
+          showToast('なまえを 入力してください');
+          return;
+        }
+
+        if (editId) {
+          const t = appState.chores.find(c => c.id === editId);
+          if (t) {
+            t.name = name;
+            t.pt = pt;
+            t.cat = cat;
+            t.icon = selectedChoreEmoji;
+          }
+        } else {
+          appState.chores.push({
+            id: 'c_' + Date.now(),
+            name,
+            pt,
+            cat,
+            icon: selectedChoreEmoji
+          });
+        }
+
+        saveState();
+        resetChoreForm();
+        renderSettingsLists();
+        updateAllUI();
+        showToast('おてつだいを ほぞんしました！');
+      });
+
+      document.getElementById('cancel-chore-edit-btn').addEventListener('click', resetChoreForm);
+
+      // ごほうび保存
+      document.getElementById('save-reward-btn').addEventListener('click', () => {
+        const name = document.getElementById('input-reward-name').value.trim();
+        const cost = Math.max(1, Number(document.getElementById('input-reward-cost').value) || 1);
+        const editId = document.getElementById('edit-reward-id').value;
+
+        if (!name) {
+          showToast('なまえを 入力してください');
+          return;
+        }
+
+        if (editId) {
+          const t = appState.rewards.find(r => r.id === editId);
+          if (t) {
+            t.name = name;
+            t.cost = cost;
+            t.icon = selectedRewardEmoji;
+          }
+        } else {
+          appState.rewards.push({
+            id: 'r_' + Date.now(),
+            name,
+            cost,
+            icon: selectedRewardEmoji
+          });
+        }
+
+        saveState();
+        resetRewardForm();
+        renderSettingsLists();
+        updateAllUI();
+        showToast('ごほうびを ほぞんしました！');
+      });
+
+      document.getElementById('cancel-reward-edit-btn').addEventListener('click', resetRewardForm);
+
+      // 全データ初期化
+      let resetConfirmStep = false;
+      document.getElementById('reset-all-data-btn').addEventListener('click', (e) => {
+        if (!resetConfirmStep) {
+          resetConfirmStep = true;
+          e.target.textContent = '⚠️ 本当に消しますか？（もういちど押すと初期化）';
+          setTimeout(() => {
+            resetConfirmStep = false;
+            e.target.textContent = '⚠️ データをすべてしょき化する';
+          }, 4000);
+        } else {
+          localStorage.removeItem(STORAGE_KEY);
+          location.reload();
+        }
+      });
+    });
+  </script>
+</body>
+</html>
